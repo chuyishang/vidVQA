@@ -14,8 +14,7 @@ import ml_collections
 
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"]="6,9"
-from tensorflow.python.client import device_lib
-print(device_lib.list_local_devices())
+
 
 # Pick your hero: (WHEN CHANGING THIS, RERUN IMAGE/TEXT EMBEDDING CELLS)
 # Give this cell 1-3mins.
