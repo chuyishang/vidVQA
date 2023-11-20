@@ -1,3 +1,9 @@
 [submodule "models/big_vision"]
 	path = models/big_vision
 	url = https://github.com/google-research/big_vision
+[submodule "models/LAVIS"]
+	path = models/LAVIS
+	url = https://github.com/salesforce/LAVIS.git
+[submodule "models/pytorch-image-models"]
+	path = models/pytorch-image-models
+	url = https://github.com/rwightman/pytorch-image-models
