@@ -1,0 +1,93 @@
+CALL 0
+ALL INFO: {}
+['a man and a woman in a recording studio']
+GETTING OUTPUT:  {'Enough Information?': False, 'Answer': None, 'Choose Frame': None, 'VQA Question': 'What is the man doing in the video?'}
+{'Enough Information?': False, 'Answer': None, 'Choose Frame': None, 'VQA Question': 'What is the man doing in the video?'}
+here2
+CALLING VQA:  What is the man doing in the video?
+VQA ANSWER:  ['playing game']
+CALL 1
+ALL INFO: {'Frame 3': {'caption': ['a man and a woman in a recording studio'], 'What is the man doing in the video?': ['playing game']}}
+['a man and a woman in a recording studio']
+GETTING OUTPUT:  {'Enough Information?': False, 'Answer': None, 'Choose Frame': 10, 'VQA Question': 'What is the man doing in the video?'}
+{'Enough Information?': False, 'Answer': None, 'Choose Frame': 10, 'VQA Question': 'What is the man doing in the video?'}
+here2
+CALLING VQA:  What is the man doing in the video?
+VQA ANSWER:  ['playing game']
+CALL 2
+ALL INFO: {'Frame 3': {'caption': ['a man and a woman in a recording studio'], 'What is the man doing in the video?': ['playing game']}, 'Frame None': {'caption': ['a man and a woman in a recording studio']}}
+['a man and a woman sitting at a table']
+GETTING OUTPUT:  {'Enough Information?': False, 'Answer': None, 'Choose Frame': 27, 'VQA Question': 'What is the lady doing after the conversation?'}
+{'Enough Information?': False, 'Answer': None, 'Choose Frame': 27, 'VQA Question': 'What is the lady doing after the conversation?'}
+here2
+CALLING VQA:  What is the lady doing after the conversation?
+VQA ANSWER:  ['listening']
+CALL 3
+ALL INFO: {'Frame 3': {'caption': ['a man and a woman in a recording studio'], 'What is the man doing in the video?': ['playing game'], 'What is the lady doing after the conversation?': ['listening']}, 'Frame None': {'caption': ['a man and a woman in a recording studio']}, 'Frame 10': {'caption': ['a man and a woman sitting at a table']}}
+['a couple of people that are sitting at a table']
+GETTING OUTPUT:  {'Enough Information?': False, 'Answer': None, 'Choose Frame': -10, 'VQA Question': 'What is happening in the conversation between the lady and the man?'}
+{'Enough Information?': False, 'Answer': None, 'Choose Frame': -10, 'VQA Question': 'What is happening in the conversation between the lady and the man?'}
+here2
+CALLING VQA:  What is happening in the conversation between the lady and the man?
+VQA ANSWER:  ['talking']
+CALL 4
+ALL INFO: {'Frame 3': {'caption': ['a man and a woman in a recording studio'], 'What is the man doing in the video?': ['playing game'], 'What is the lady doing after the conversation?': ['listening'], 'What is happening in the conversation between the lady and the man?': ['talking']}, 'Frame None': {'caption': ['a man and a woman in a recording studio']}, 'Frame 10': {'caption': ['a man and a woman sitting at a table']}, 'Frame 27': {'caption': ['a couple of people that are sitting at a table']}}
+['a man and a woman standing in front of a control room']
+ERROR:  {"Enough Information?": No, "Answer": None, "Choose Frame": None, "VQA Question": "What is the man doing in the video?"}
+None
+
+=======================================
+
+CALL 0
+ALL INFO: {}
+['a man and a woman in a recording studio']
+GETTING OUTPUT:  {'Enough Information?': False, 'Answer': None, 'Choose Frame': 30, 'VQA Question': 'What is the conversation between the man and the woman about?'}
+{'Enough Information?': False, 'Answer': None, 'Choose Frame': 30, 'VQA Question': 'What is the conversation between the man and the woman about?'}
+here2
+CALLING VQA:  What is the conversation between the man and the woman about?
+VQA ANSWER:  ['music']
+CALL 1
+ALL INFO: {'Frame 3': {'caption': ['a man and a woman in a recording studio'], 'What is the conversation between the man and the woman about?': ['music']}}
+['a man and a woman are looking at a video game']
+GETTING OUTPUT:  {'Enough Information?': False, 'Answer': None, 'Choose Frame': -1, 'VQA Question': 'Why is the lady walking away?'}
+{'Enough Information?': False, 'Answer': None, 'Choose Frame': -1, 'VQA Question': 'Why is the lady walking away?'}
+here2
+CALLING VQA:  Why is the lady walking away?
+VQA ANSWER:  ['she is talking to man']
+CALL 2
+ALL INFO: {'Frame 3': {'caption': ['a man and a woman in a recording studio'], 'What is the conversation between the man and the woman about?': ['music'], 'Why is the lady walking away?': ['she is talking to man']}, 'Frame 30': {'caption': ['a man and a woman are looking at a video game']}}
+['a man and a woman sitting in front of a control room']
+GETTING OUTPUT:  {'Enough Information?': False, 'Answer': None, 'Choose Frame': 1, 'VQA Question': 'What is the man doing in the video?'}
+{'Enough Information?': False, 'Answer': None, 'Choose Frame': 1, 'VQA Question': 'What is the man doing in the video?'}
+here2
+CALLING VQA:  What is the man doing in the video?
+VQA ANSWER:  ['watching tv']
+CALL 3
+ALL INFO: {'Frame 3': {'caption': ['a man and a woman in a recording studio'], 'What is the conversation between the man and the woman about?': ['music'], 'Why is the lady walking away?': ['she is talking to man'], 'What is the man doing in the video?': ['watching tv']}, 'Frame 30': {'caption': ['a man and a woman are looking at a video game']}, 'Frame -1': {'caption': ['a man and a woman sitting in front of a control room']}}
+['a man and a woman are looking at a sound board']
+GETTING OUTPUT:  {'Enough Information?': False, 'Answer': None, 'Choose Frame': 36, 'VQA Question': 'What is the woman doing after the conversation?'}
+{'Enough Information?': False, 'Answer': None, 'Choose Frame': 36, 'VQA Question': 'What is the woman doing after the conversation?'}
+here2
+CALLING VQA:  What is the woman doing after the conversation?
+VQA ANSWER:  ['listening to music']
+CALL 4
+ALL INFO: {'Frame 3': {'caption': ['a man and a woman in a recording studio'], 'What is the conversation between the man and the woman about?': ['music'], 'Why is the lady walking away?': ['she is talking to man'], 'What is the man doing in the video?': ['watching tv'], 'What is the woman doing after the conversation?': ['listening to music']}, 'Frame 30': {'caption': ['a man and a woman are looking at a video game']}, 'Frame -1': {'caption': ['a man and a woman sitting in front of a control room']}, 'Frame 1': {'caption': ['a man and a woman are looking at a sound board']}}
+['a man and a woman are sitting at a sound board']
+GETTING OUTPUT:  {'Enough Information?': False, 'Answer': None, 'Choose Frame': -1, 'VQA Question': 'What is the man doing in the video?'}
+{'Enough Information?': False, 'Answer': None, 'Choose Frame': -1, 'VQA Question': 'What is the man doing in the video?'}
+here2
+CALLING VQA:  What is the man doing in the video?
+VQA ANSWER:  ['playing game']
+CALL 5
+ALL INFO: {'Frame 3': {'caption': ['a man and a woman in a recording studio'], 'What is the conversation between the man and the woman about?': ['music'], 'Why is the lady walking away?': ['she is talking to man'], 'What is the man doing in the video?': ['playing game'], 'What is the woman doing after the conversation?': ['listening to music']}, 'Frame 30': {'caption': ['a man and a woman are looking at a video game']}, 'Frame -1': {'caption': ['a man and a woman sitting in front of a control room']}, 'Frame 1': {'caption': ['a man and a woman are looking at a sound board']}, 'Frame 36': {'caption': ['a man and a woman are sitting at a sound board']}}
+['a man and a woman sitting in front of a control room']
+GETTING OUTPUT:  {'Enough Information?': False, 'Answer': None, 'Choose Frame': 1, 'VQA Question': 'What is the lady doing after the conversation with the man?'}
+{'Enough Information?': False, 'Answer': None, 'Choose Frame': 1, 'VQA Question': 'What is the lady doing after the conversation with the man?'}
+here2
+CALLING VQA:  What is the lady doing after the conversation with the man?
+VQA ANSWER:  ['watching']
+CALL 6
+ALL INFO: {'Frame 3': {'caption': ['a man and a woman in a recording studio'], 'What is the conversation between the man and the woman about?': ['music'], 'Why is the lady walking away?': ['she is talking to man'], 'What is the man doing in the video?': ['playing game'], 'What is the woman doing after the conversation?': ['listening to music'], 'What is the lady doing after the conversation with the man?': ['watching']}, 'Frame 30': {'caption': ['a man and a woman are looking at a video game']}, 'Frame -1': {'caption': ['a man and a woman sitting in front of a control room']}, 'Frame 1': {'caption': ['a man and a woman are looking at a sound board']}, 'Frame 36': {'caption': ['a man and a woman are sitting at a sound board']}}
+['a man and a woman are looking at a sound board']
+ERROR:  {"Enough Information?": No, "Answer": None, "Choose Frame": 2, "VQA Question": "What happens after the conversation?"}
+None

@@ -11,9 +11,9 @@ You will also have access to a simple visual questioning module. If you do not h
 First, before selecting an answer choice, decide if you have enough information to answer the question. If you do not have enough information to answer the question, return None as the answer and ask a question or ask to be shown a different frame. You can ask multiple questions to the same frame as well.
 
 Return your output as a dictionary with the fields and format:
-- "Enough Information": A single boolean True or False value.
+- "Enough Information": True or False
 - "Answer": The index of the chosen answer choice if "Enough Information" == True, else None.
-- "Choose Frame": None if "Enough Information" == True, else an integer representing how many frames forward or backward to go, with positive integers representing forward movement and negative representing backward movement.
+- "Choose Frame": None if "Enough Information" == True, else an integer representing which frame to go to
 - "VQA Question": None if "Enough Information" == True, else a String consisting of a question you want to ask about the current frame to get enough information to answer the question.
 
 You will be provided some examples:
@@ -26,7 +26,7 @@ CAPTION: 'a woman with headphones on in a recording studio'
 PREVIOUS INFO: None
 
 OUTPUT:
-{"Enough Information?": No, "Answer": None, "Choose Frame": 30, "VQA Question": None}
+{"Enough Information?": False, "Answer": None, "Choose Frame": 30, "VQA Question": None}
 
 ### Example 2:
 QUESTION: what are the two men doing as the lady in blue stands and listen via her headphone?
@@ -34,10 +34,10 @@ ANSWER CHOICES: ['turns around', 'working on the radio', 'moving the papers', 'w
 CURRENT FRAME: 163
 TOTAL FRAMES: 1663
 CAPTION: ['a man and a woman in a control room']
-PREVIOUS INFO: {"Frame 400": {"Caption": 'a woman with headphones on in a recording studio'}}
+PREVIOUS INFO: {"Frame 133": {"Caption": 'a woman with headphones on in a recording studio'}}
 
 OUTPUT:
-{"Enough Information?": No, "Answer": None, "Choose Frame": None, "VQA Question": 'What is the man in the video doing?'}
+{"Enough Information?": False, "Answer": None, "Choose Frame": 163, "VQA Question": 'What is the man in the video doing?'}
 
 ### Example 3:
 QUESTION: what are the two men doing as the lady in blue stands and listen via her headphone?
@@ -48,7 +48,7 @@ CAPTION: ['a man and a woman in a control room']
 PREVIOUS INFO: {"Frame 400": {"Caption": 'a woman with headphones on in a recording studio'}, "Frame 163": {"Caption": 'a man and a woman in a control room', "What is the man in the video doing?": 'Operating a radio'} }
 
 OUTPUT:
-{"Enough Information?": Yes, "Answer": 1, "Choose Frame": None, "VQA Question": None}
+{"Enough Information?": True, "Answer": 1, "Choose Frame": None, "VQA Question": None}
 
 ### Example 4:
 QUESTION: where is this occuring?
@@ -83,7 +83,10 @@ PREVIOUS INFO: {"Frame 400": {"How many children are in the image?": '4', "Capti
 OUTPUT:
 {"Enough Information?": True, "Answer": 1, "Choose Frame": None, "VQA Question": None}
 
-Now, start completion after OUTPUT. Remember that you are asking questions about a video and the temporal context associated with that. Double-check that you are using the same format as specified in the question and in the examples! This is very important to my career.
+Now, start completion after OUTPUT. 
+Remember that you are asking questions about a video and the temporal context associated with that. Double-check that you are using the same format as specified in the question and in the examples! Make sure to double check that your output can be cast as a Python dictionary. For example, make sure that any None values are only represented as None and not other things like No or Null. This is extremely important. Also be sure to double-check that the outputted "Choose Frame" you want to go to is in range of the total frames of the video. This is very important to my career. You do not need to have all the information to select an answer choice. Since the information you are provided can be noisy, if multiple pieces of information point to the same answer, you can consider making an educated guess. Or, if you have some pieces of information that make none of the other options seem very plausible, you can also try to make an educated guess on the correct answer choice.
+
+###
 QUESTION: insert_question
 ANSWER CHOICES: insert_choices
 CURRENT FRAME: insert_curr_frame
