@@ -83,7 +83,7 @@ PREVIOUS INFO: {"Frame 400": {"How many children are in the image?": '4', "Capti
 OUTPUT:
 {"Enough Information?": True, "Answer": 1, "Choose Frame": None, "VQA Question": None}
 
-Now, complete the following. Remember that you are asking questions about a video and the temporal context associated with that. Double-check that you are using the same format as specified in the question and in the examples! This is very important to my career.
+Now, start completion after OUTPUT. Remember that you are asking questions about a video and the temporal context associated with that. Double-check that you are using the same format as specified in the question and in the examples! This is very important to my career.
 QUESTION: insert_question
 ANSWER CHOICES: insert_choices
 CURRENT FRAME: insert_curr_frame

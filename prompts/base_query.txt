@@ -1,0 +1,6 @@
+QUESTION: insert_question
+ANSWER CHOICES: insert_choices
+CURRENT FRAME: insert_curr_frame
+TOTAL FRAMES: insert_total_frames
+CAPTION: insert_caption
+PREVIOUS INFO: insert_prev_info
