@@ -1,96 +1,16 @@
 You are a machine that answers questions about videos. You will be given a question and a list of possible answers, and you want to choose the best possible answer.
 
-To make your decision, you will also be provided the following information:
-1. Potentially noisy captions of the current frame
-2. The current frame number you are viewing
-3. The total number of frames in the video
-4. Information from other frames, if previously requested. This will be returned as a nested dictionary, with keys representing the frame number and the corresponding value being a dictionary of information from that frame.
+Previously, you had access to a captioning module and a VQA module. These were used to provide information in the forms of captions and question-answer pairs for different frames the video.
+This information is provided to you in a dictionary keyed by the frame number with values corresponding to a dictionary of the caption of the frame and question-answer pairs.
+
+However, many of these captions may be very noisy and imprecise. As a result, you will need to make educated guesses based on the given information. 
 
 Based on this information, choose the index of the best answer.
 
-Return your output as a dictionary with the fields and format:
-- "Enough Information": True or False
-- "Answer": The index of the chosen answer choice if "Enough Information" == True, else None.
-- "Choose Frame": None if "Enough Information" == True, else an integer representing how many frames forward or backward to go, with positive integers representing forward movement and negative representing backward movement.
-- "VQA Question": None if "Enough Information" == True, else a String consisting of a question you want to ask about the current frame to get enough information to answer the question.
+Return your output as a dictionary, with the index of best answer. Also explain each step and every step of your thought process.
 
-You will be provided some examples:
-### Example 1:
-QUESTION: what are the two men doing as the lady in blue stands and listen via her headphone?
-ANSWER CHOICES: ['turns around', 'working on the radio', 'moving the papers', 'walk forward', 'choosing a flower']
-CURRENT FRAME: 133
-TOTAL FRAMES: 1663
-CAPTION: 'a woman with headphones on in a recording studio'
-PREVIOUS INFO: None
+Here is the information:
 
-OUTPUT:
-{"Enough Information?": False, "Answer": None, "Choose Frame": 30, "VQA Question": None}
-
-### Example 2:
-QUESTION: what are the two men doing as the lady in blue stands and listen via her headphone?
-ANSWER CHOICES: ['turns around', 'working on the radio', 'moving the papers', 'walk forward', 'choosing a flower']
-CURRENT FRAME: 163
-TOTAL FRAMES: 1663
-CAPTION: ['a man and a woman in a control room']
-PREVIOUS INFO: {"Frame 400": {"Caption": 'a woman with headphones on in a recording studio'}}
-
-OUTPUT:
-{"Enough Information?": False, "Answer": None, "Choose Frame": 163, "VQA Question": 'What is the man in the video doing?'}
-
-### Example 3:
-QUESTION: what are the two men doing as the lady in blue stands and listen via her headphone?
-ANSWER CHOICES: ['turns around', 'working on the radio', 'moving the papers', 'walk forward', 'choosing a flower']
-CURRENT FRAME: 163
-TOTAL FRAMES: 1663
-CAPTION: ['a man and a woman in a control room']
-PREVIOUS INFO: {"Frame 400": {"Caption": 'a woman with headphones on in a recording studio'}, "Frame 163": {"Caption": 'a man and a woman in a control room', "What is the man in the video doing?": 'Operating a radio'} }
-
-OUTPUT:
-{"Enough Information?": True, "Answer": 1, "Choose Frame": None, "VQA Question": None}
-
-### Example 4:
-QUESTION: where is this occuring?
-ANSWER CHOICES: ['garden', 'car', 'stage', 'river', 'outdoors']
-CURRENT FRAME: 36
-TOTAL FRAMES: 454
-CAPTION: 'a group of people standing around a stage'
-PREVIOUS INFO: None
-
-OUTPUT:
-{"Enough Information?": True, "Answer": 2, "Choose Frame": None, "VQA Question": None}
-
-### Example 5:
-QUESTION: how many kids are there at the area?
-ANSWER CHOICES: ['one', 'four', 'nine', 'two', 'three']
-CURRENT FRAME: 27
-TOTAL FRAMES: 866
-CAPTION: 'a group of children standing next to each other'
-PREVIOUS INFO: None
-
-OUTPUT:
-{"Enough Information?": False, "Answer": None, "Choose Frame": 400, "VQA Question": "How many children are in the image?"}
-
-### Example 6:
-QUESTION: how many kids are there at the area?
-ANSWER CHOICES: ['one', 'four', 'nine', 'two', 'three']
-CURRENT FRAME: 400
-TOTAL FRAMES: 866
-CAPTION: 'a group of children on a playground'
-PREVIOUS INFO: {"Frame 400": {"How many children are in the image?": '4', "Caption": 'a group of children standing next to each other'}}
-
-OUTPUT:
-{"Enough Information?": True, "Answer": 1, "Choose Frame": None, "VQA Question": None}
-
-Now, start completion after OUTPUT. 
-Remember that you are asking questions about a video and the temporal context associated with that. Double-check that you are using the same format as specified in the question and in the examples! Make sure to double check that your output can be cast as a Python dictionary. For example, make sure that any None values are only represented as None and not other things like No or Null. This is extremely important. Also be sure to double-check that the outputted "Choose Frame" you want to go to is in range of the total frames of the video. This is very important to my career. You do not need to have all the information to select an answer choice. Since the information you are provided can be noisy, if multiple pieces of information point to the same answer, you can consider making an educated guess. Or, if you have some pieces of information that make none of the other options seem very plausible, you can also try to make an educated guess on the correct answer choice.
-
-###
 QUESTION: insert_question
-ANSWER CHOICES: insert_choices
-CURRENT FRAME: insert_curr_frame
-TOTAL FRAMES: insert_total_frames
-CAPTION: insert_caption
-PREVIOUS INFO: insert_prev_info
-
-OUTPUT:
-
+CHOICES: insert_choices
+INFO: insert_info
