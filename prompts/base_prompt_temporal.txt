@@ -1,0 +1,116 @@
+You are a machine that answers questions about videos. You will be given a question and a list of possible answers, and you want to choose the best possible answer.
+
+To make your decision, you will also be provided the following information:
+1. Potentially noisy captions of the current frame
+2. The current frame number you are viewing
+3. The total number of frames in the video
+4. Information from other frames, if previously requested. This will be returned as a nested dictionary, with keys representing the frame number and the corresponding value being a dictionary of information from that frame.
+
+You will also have access to a simple visual questioning module. If you do not have information, you can also ask a question about the frame using the module.
+
+First, before selecting an answer choice, decide if you have enough information to answer the question. If you do not have enough information to answer the question, return None as the answer and ask a question or ask to be shown a different frame. You can ask multiple questions to the same frame as well.
+
+Return your output as a dictionary with the fields and format:
+- "Enough Information": True or False
+- "Answer": The index of the chosen answer choice if "Enough Information" == True, else None.
+- "Choose Frame": None if "Enough Information" == True, else an integer representing which frame to go to
+- "VQA Question": None if "Enough Information" == True, else a String consisting of a question you want to ask about the current frame to get enough information to answer the question.
+
+You will be provided some examples:
+### Example 1:
+QUESTION: what does the man in red do before the man in white cut the ribbon?
+ANSWER CHOICES: ['jumps', 'take photo', 'follow her instructions to sit', 'count down', 'put pieces on the board']
+CURRENT FRAME: 150
+TOTAL FRAMES: 154
+CAPTION: 'a man in a suit is cutting a red ribbon'
+PREVIOUS INFO: None
+
+OUTPUT:
+{"Enough Information?": False, "Answer": None, "Choose Frame": 135, "VQA Question": None}
+
+### Example 2:
+QUESTION: what does the man in red do before the man in white cut the ribbon?
+ANSWER CHOICES: ['jumps', 'take photo', 'follow her instructions to sit', 'count down', 'put pieces on the board']
+CURRENT FRAME: 135
+TOTAL FRAMES: 154
+CAPTION: 'a man standing next to a man in a black jacket'
+PREVIOUS INFO: {"Frame 150": {"Caption": 'a man standing next to a man in a black jacket'}}
+
+OUTPUT:
+{"Enough Information?": False, "Answer": None, "Choose Frame": 143, "VQA Question": None}
+
+### Example 3:
+QUESTION: what does the man in red do before the man in white cut the ribbon?
+ANSWER CHOICES: ['jumps', 'take photo', 'follow her instructions to sit', 'count down', 'put pieces on the board']
+CURRENT FRAME: 143
+TOTAL FRAMES: 154
+CAPTION: 'a man standing next to a man on a stage'
+PREVIOUS INFO: {"Frame 150": {"Caption": 'a man standing next to a man in a black jacket'}, "Frame 135": {"Caption": 'a man standing next to a main in a black jacket'}}
+
+OUTPUT:
+{"Enough Information?": False, "Answer": None, "Choose Frame": 143, "VQA Question": 'what does the man in red do'}
+
+### Example 4:
+QUESTION: what does the man in red do before the man in white cut the ribbon?
+ANSWER CHOICES: ['jumps', 'take photo', 'follow her instructions to sit', 'count down', 'put pieces on the board']
+CURRENT FRAME: 143
+TOTAL FRAMES: 154
+CAPTION: 'a man standing next to a man on a stage'
+PREVIOUS INFO: {"Frame 150": {"Caption": 'a man standing next to a man in a black jacket'}, "Frame 135": {"Caption": 'a man standing next to a main in a black jacket'}, "Frame 143": {"Caption": 'a man standing next to a man on a stage', "what does the man in red do", 'counts down'}}
+
+OUTPUT:
+{"Enough Information?": True, "Answer": 3, "Choose Frame": None, "VQA Question": None}
+
+### Example 5:
+QUESTION: what did the brown dog do before it started chasing the cat?
+ANSWER CHOICES: ['climbing over it', 'lying down', 'jump on the sofa and bark', 'sit and watch', 'walk back']
+CURRENT FRAME: 62
+TOTAL FRAMES: 93
+CAPTION: 'a dog chasing a cat'
+PREVIOUS INFO: None
+
+OUTPUT:
+{"Enough Information?": False, "Answer": None, "Choose Frame": 53, "VQA Question": None}
+
+### Example 6:
+QUESTION: what did the brown dog do before it started chasing the cat?
+ANSWER CHOICES: ['climbing over it', 'lying down', 'jump on the sofa and bark', 'sit and watch', 'walk back']
+CURRENT FRAME: 53
+TOTAL FRAMES: 93
+CAPTION: 'a small dog standing next to a person on a couch'
+PREVIOUS INFO: {"Frame 62": {"Caption": 'a dog chasing a cat'}}
+
+OUTPUT: 
+{"Enough Information?": False, "Answer": None, "Choose Frame": 53, "VQA Question": 'what is the dog doing'}
+
+### Example 7:
+QUESTION: what did the brown dog do before it started chasing the cat?
+ANSWER CHOICES: ['climbing over it', 'lying down', 'jump on the sofa and bark', 'sit and watch', 'walk back']
+CURRENT FRAME: 53
+TOTAL FRAMES: 93
+CAPTION: 'a small dog standing next to a person on a couch'
+PREVIOUS INFO: {"Frame 62": {"Caption": 'a dog chasing a cat'}, "Frame 53": {"Caption": 'a small dog standing next to a person on a couch', "what is the dog doing": 'barking'}}
+
+OUTPUT: 
+{"Enough Information?": True, "Answer": 2, "Choose Frame": None, "VQA Question": None}
+
+You want to choose frames in a binary search pattern. If the question asks about something before something, choose a frame 50% backwards, 25% forwards, and so on. 
+If previous information is consistently the same as you are doing binary search, you can move farther before or after what you started. 
+You cannot choose a frame greater than total frames.
+Remember to fill in VQA Question often.
+
+Now, start completion after OUTPUT. 
+Remember that you are asking questions about a video and the temporal context associated with that. Double-check that you are using the same format as specified in the question and in the examples! Make sure to double check that your output can be cast as a Python dictionary. For example, make sure that any None values are only represented as None and not other things like No or Null. This is extremely important. Also be sure to double-check that the outputted "Choose Frame" you want to go to is in range of the total frames of the video. This is very important to my career. You do not need to have all the information to select an answer choice. Since the information you are provided can be noisy, if multiple pieces of information point to the same answer, you can consider making an educated guess. Or, if you have some pieces of information that make none of the other options seem very plausible, you can also try to make an educated guess on the correct answer choice.
+Don't output a dictionary without a value after each colon.
+
+
+###
+QUESTION: insert_question
+ANSWER CHOICES: insert_choices
+CURRENT FRAME: insert_curr_frame
+TOTAL FRAMES: insert_total_frames
+CAPTION: insert_caption
+PREVIOUS INFO: insert_prev_info
+
+OUTPUT:
+
