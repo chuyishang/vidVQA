@@ -7,10 +7,16 @@ However, many of these captions may be very noisy and imprecise. As a result, yo
 
 Based on this information, choose the index of the best answer.
 
-Return your output as a dictionary, with the index of best answer. Also explain each step and every step of your thought process.
+Return your output as a dictionary, with the index of best answer as an integer in the "Answer" field. Also explain each step and every step of your thought process, in the "Reasons" field.
 
-Here is the information:
+Make sure to double check that your output can be cast as a Python dictionary. For example, make sure that any None values are only represented as None and not other things like No or Null. This is extremely important.
+Here is an example format of the output:
+OUTPUT: {"Answer": 1, "Reasons": "some string here"}
+
+Here is the information. Now, start completion after OUTPUT.
 
 QUESTION: insert_question
 CHOICES: insert_choices
 INFO: insert_info
+
+OUTPUT: 
