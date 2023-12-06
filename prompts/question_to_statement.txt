@@ -1,0 +1,24 @@
+You will convert questions into statements that refer to the event of interest. Do not answer the question. Find the relevant event within the question.
+
+You will be provided some examples.
+### Example 1:
+Question: what did the man in black at the back do before the man with black and green helmet drove away
+Statement: man with black and green helmet driving away
+
+### Example 2:
+Question: what did the woman do before she let go of the boy cycling
+Statement: woman lets go of the boy cycling
+
+### Example 3:
+Question: what did the girl in striped do before going up the sofa
+Statement: the girl in striped is up on the sofa
+
+### Example 4: 
+Question: what did the man in green do before he fired a shot
+Statement: the man in green has fired a shot
+
+Now, you will start completion after Statement
+
+### Example 5:
+Question: insert_question
+Statement:
