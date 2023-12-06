@@ -1,6 +1,7 @@
 import dataset
 import utils
 from tqdm import tqdm
+import argparse
 
 
 def get_siglip_query(question):
@@ -13,7 +14,7 @@ def get_siglip_query(question):
 
 def main():
     print("here1")
-    data = dataset.get_data("queries.csv")
+    data = dataset.get_data(args.query_file)
     ids, choices, queries, answers, vid_names = data
     for i in tqdm(range(len(ids))):
         if i <= 2:
@@ -26,11 +27,14 @@ def main():
         print(video_id)
         try:
             output = utils.answer_question(video_id, question, options, query)
-            with open('./results.csv', 'a') as f:
-                f.write(f'{ids[i]},{video_id},{question},"{options}",{output},{answers[i]}\n')
+            with open(f'./outputs/results_{args.query_file}', 'a') as f:
+                f.write(f'{ids[i]},{video_id},{question},"{options}",{output[0]},{answers[i]}\n')
         except:
-            with open('./failures.csv', 'a') as f:
+            with open(f'./outputs/failures_{args.query_file}', 'a') as f:
                 f.write(f'{ids[i]},{video_id},{question},"{options}",{output[0]},{answers[i]}\n')
         
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Arguments')
+    parser.add_argument('--query_file', type=str, default="queries.csv", help='Path to the data file')
+    args = parser.parse_args()
     main()

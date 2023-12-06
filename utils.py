@@ -17,8 +17,8 @@ with open('api_org.key') as f:
     openai.organization = f.read().strip()
 
 
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-device2 = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device2 = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(device, device2)
 
 def get_video(video_path, fps=30):
