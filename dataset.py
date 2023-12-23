@@ -36,7 +36,7 @@ class MyDataset(Dataset):
     def get_sample_path(self, index):
         return os.path.join(self.path, self.df.iloc[index]["video_name"])
 
-    def get_video(self, video_path, fps=30, sample_freq=None):
+    def get_video(self, video_path, fps=30, sample_freq=None, transform=None):
         """Gets a video and returns it as a tensor.
             - video_path: path to the video
             - fps: fps of the video
@@ -56,6 +56,13 @@ class MyDataset(Dataset):
             frame_idxs = frame_idxs[::sample_freq]
         video = video_reader.get_batch(frame_idxs).byte()
         video = video.permute(0, 3, 1, 2)
+
+        # Deafult transform is to transform .ToPILImage(). TODO: implement functionality for other transforms
+        if not transform:
+            transform = T.ToPILImage()
+            for i in range(len(video)):
+                video = [transform(video[i]) for i in range(0, video.shape[0])]
+
         return video
     
     def __get__item__(self, index):

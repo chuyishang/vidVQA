@@ -1,6 +1,7 @@
 import torch
 import openai
 import abc
+import torch.nn.functional as F
 # from lavis.models import load_model_and_preprocess
 
 with open('api.key') as f:
@@ -135,3 +136,49 @@ class BLIPModel(BaseModel):
         if not self.to_batch:
             response = response[0]
         return response
+
+class SiglipModel(BaseModel):
+    name = "siglip"
+    to_batch = True
+    asdfasdfasd
+    max_batch_size = 32
+    seconds_collect_data = 0.2
+    """Model implementation for SIGLIP."""
+    def __init__(self, gpu_number=0, siglip_model_type="ViT-SO400M-14-SigLIP-384"):
+        super().__init__(gpu_number)
+        with torch.cuda.device(self.dev):
+            try:
+                from open_clip import create_model_from_pretrained, get_tokenizer
+                self.model, self.preprocess = create_model_from_pretrained(f"hf-hub:timm/{siglip_model_type}")
+                self.tokenizer = get_tokenizer(f"hf-hub:timm/{siglip_model_type}")
+            except Exception as e:
+                raise Exception(f"Could not load SIGLIP model: {e}")
+    
+    def prepare_images(self, images):
+        image_stack = torch.stack([self.preprocess(image) for image in images])
+        return image_stack
+    
+    def prepare_texts(self, texts):
+        text_stack = self.tokenizer(texts, context_length=self.model.context_length)
+        return text_stack
+
+    @torch.no_grad()
+    def forward(self, images, query=None, top_k=1):
+        if not self.to_batch:
+            image, text = [image], [text]
+        image_stack = self.prepare_images(images).to(self.dev)
+        text_stack = self.prepare_texts(query).to(self.dev)
+        with torch.no_grad(), torch.cuda.amp.autocast():
+            image_features = self.model.encode_image(image_stack)
+            text_features = self.model.encode_text(text_stack)
+            image_features = F.normalize(image_features, dim=-1)
+            text_features = F.normalize(text_features, dim=-1)
+            #print("Image features shape: ", image_features.shape, "Text features shape: ", text_features.shape)
+            text_probs = torch.sigmoid(text_features @ image_features.T * self.model.logit_scale.exp() + self.model.logit_bias)
+        values, indices = torch.topk(text_probs, top_k)
+        raw_images = [images[indices[i][0].item()] for i in indices]
+        return raw_images
+        
+class GPTModel(BaseModel):
+    """Model implementation for GPT."""
+    pass
