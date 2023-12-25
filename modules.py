@@ -140,7 +140,6 @@ class BLIPModel(BaseModel):
 class SiglipModel(BaseModel):
     name = "siglip"
     to_batch = True
-    asdfasdfasd
     max_batch_size = 32
     seconds_collect_data = 0.2
     """Model implementation for SIGLIP."""
@@ -150,6 +149,7 @@ class SiglipModel(BaseModel):
             try:
                 from open_clip import create_model_from_pretrained, get_tokenizer
                 self.model, self.preprocess = create_model_from_pretrained(f"hf-hub:timm/{siglip_model_type}")
+                self.model = self.model.to(self.dev)
                 self.tokenizer = get_tokenizer(f"hf-hub:timm/{siglip_model_type}")
             except Exception as e:
                 raise Exception(f"Could not load SIGLIP model: {e}")
@@ -163,11 +163,11 @@ class SiglipModel(BaseModel):
         return text_stack
 
     @torch.no_grad()
-    def forward(self, images, query=None, top_k=1):
+    def forward(self, images, queries=NotImplementedError, top_k=1):
         if not self.to_batch:
             image, text = [image], [text]
         image_stack = self.prepare_images(images).to(self.dev)
-        text_stack = self.prepare_texts(query).to(self.dev)
+        text_stack = self.prepare_texts(queries).to(self.dev)
         with torch.no_grad(), torch.cuda.amp.autocast():
             image_features = self.model.encode_image(image_stack)
             text_features = self.model.encode_text(text_stack)
@@ -175,9 +175,17 @@ class SiglipModel(BaseModel):
             text_features = F.normalize(text_features, dim=-1)
             #print("Image features shape: ", image_features.shape, "Text features shape: ", text_features.shape)
             text_probs = torch.sigmoid(text_features @ image_features.T * self.model.logit_scale.exp() + self.model.logit_bias)
+        # indices returns a matrix of shape [len(queries), top_k], where each row is the top_k indices for that text
         values, indices = torch.topk(text_probs, top_k)
-        raw_images = [images[indices[i][0].item()] for i in indices]
+        # TODO: implement functionality for multiple text prompts (batched)
+        
+        raw_images = []
+        for i in range(len(queries)):
+            #raw_images.append([indices[i][idx] for idx in range(3)])
+            #indices = [indices[i][idx] for idx in range(top_k)] 
+            raw_images.append([images[num] for num in [indices[i][idx].item() for idx in range(top_k)]])
         return raw_images
+
         
 class GPTModel(BaseModel):
     """Model implementation for GPT."""
