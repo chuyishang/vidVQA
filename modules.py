@@ -1,7 +1,12 @@
 import torch
 import openai
 import abc
+import ast
 import torch.nn.functional as F
+
+from config import settings as config
+from collections import Counter
+from itertools import chain
 # from lavis.models import load_model_and_preprocess
 
 with open('api.key') as f:
@@ -108,7 +113,7 @@ class BLIPModel(BaseModel):
         inputs = self.processor(images=image, text=question, return_tensors="pt", padding="longest").to(self.dev)
         if self.half_precision:
             inputs['pixel_values'] = inputs['pixel_values'].half()
-        generated_ids = self.model.generate(**inputs, length_penalty=-1, num_beams=5, max_length=10, min_length=1,
+        generated_ids = self.model.generate(**inputs, length_penalty=-1, num_beams=5, max_length=1000, min_length=1,
                                             do_sample=False, top_p=0.9, repetition_penalty=1.0,
                                             num_return_sequences=1, temperature=1)
         generated_text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)
@@ -184,9 +189,182 @@ class SiglipModel(BaseModel):
             #raw_images.append([indices[i][idx] for idx in range(3)])
             #indices = [indices[i][idx] for idx in range(top_k)] 
             raw_images.append([images[num] for num in [indices[i][idx].item() for idx in range(top_k)]])
+        # TODO: also return the index
         return raw_images
 
         
 class GPTModel(BaseModel):
     """Model implementation for GPT."""
     pass
+
+class GPTModel(BaseModel):
+    name = 'gpt3'
+    to_batch = False
+    requires_gpu = False
+
+    def __init__(self, gpu_number=0):
+        super().__init__(gpu_number=gpu_number)
+        # TODO: modify the prompting mechanism
+        with open(config["gpt3"]["qa_prompt"]) as f:
+            self.qa_prompt = f.read().strip()
+        self.temperature = config["gpt3"]["temperature"]
+        self.n_votes = config["gpt3"]["n_votes"]
+        self.model = config["gpt3"]["model"]
+
+    @staticmethod
+    def call_llm(prompt):
+        completion = openai.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "Follow the directions given in the next prompt carefully."},
+            {"role": "user", "content": prompt}
+        ]
+        )
+        output_message = completion.choices[0].message.content
+        return output_message
+
+    @staticmethod
+    def get_answer_helper(self, question, answer_choices, curr_frame, total_frames, caption, prev_info=None):
+        with open('./prompts/base_prompt.txt') as f:
+            prompt = f.read()
+        prompt = prompt.replace('insert_question', question)
+        prompt = prompt.replace('insert_choices', str(answer_choices))
+        prompt = prompt.replace('insert_curr_frame', str(curr_frame))
+        prompt = prompt.replace('insert_total_frames', str(total_frames))
+        prompt = prompt.replace('insert_caption', caption[0])
+
+        #print(prompt)
+        output = self.call_llm(prompt)
+        try:
+            output_dict = ast.literal_eval(output)
+            print("GETTING OUTPUT: ", output_dict)
+            return output_dict
+        except:
+            print("ERROR: ", output)
+
+    def final_select(self, question, choices, info):
+        with open('./prompts/final_prompt.txt') as f:
+            prompt = f.read()
+        prompt = prompt.replace('insert_question', question)
+        prompt = prompt.replace('insert_choices', str(choices))
+        prompt = prompt.replace('insert_info', str(info))
+        #print(prompt)
+        output = self.call_llm(prompt)
+        try:
+            output_dict = ast.literal_eval(output)
+            print("GETTING FINAL OUTPUT: ", output_dict)
+            return output_dict
+        except:
+            print("ERROR: ", output)
+            return output
+
+
+    # initial cleaning for reference QA results
+    @staticmethod
+    def process_answer(answer):
+        """Strips whitespace, periods, commas, and filler words"""
+        answer = answer.lstrip()  # remove leading spaces (our addition)
+        answer = answer.replace('.', '').replace(',', '').lower()
+        to_be_removed = {'a', 'an', 'the', 'to', ''}
+        answer_list = answer.split(' ')
+        answer_list = [item for item in answer_list if item not in to_be_removed]
+        return ' '.join(answer_list)
+
+    @staticmethod
+    def get_union(lists):
+        return list(set(chain.from_iterable(lists)))
+
+    @staticmethod
+    def most_frequent(answers):
+        """Returns the most frequent answer based on count"""
+        answer_counts = Counter(answers)
+        return answer_counts.most_common(1)[0][0]
+
+    def get_qa(self, prompts, prompt_base: str=None) -> list[str]:
+        if prompt_base is None:
+            prompt_base = self.qa_prompt
+        prompts_total = []
+        for p in prompts:
+            question = p
+            prompts_total.append(prompt_base.format(question))
+        response = self.get_qa_fn(prompts_total)
+        if self.n_votes > 1:
+            response_ = []
+            for i in range(len(prompts)):
+                if self.model == 'chatgpt':
+                    resp_i = [r['message']['content']
+                              for r in response['choices'][i * self.n_votes:(i + 1) * self.n_votes]]
+                else:
+                    resp_i = [r['text'] for r in response['choices'][i * self.n_votes:(i + 1) * self.n_votes]]
+                response_.append(self.most_frequent(resp_i))
+            response = response_
+        else:
+            if self.model == 'chatgpt':
+                response = [r['message']['content'] for r in response['choices']]
+            else:
+                response = [self.process_answer(r["text"]) for r in response['choices']]
+        return response
+
+    def get_qa_fn(self, prompt):
+        response = self.query_gpt3(prompt, model=self.model, max_tokens=5, logprobs=1, stream=False,
+                                   stop=["\n", "<|endoftext|>"])
+        return response
+
+    def get_general(self, prompts) -> list[str]:
+        if self.model == "chatgpt":
+            raise NotImplementedError
+        response = self.query_gpt3(prompts, model=self.model, max_tokens=256, top_p=1, frequency_penalty=0,
+                                   presence_penalty=0)
+        response = [r["text"] for r in response['choices']]
+        return response
+
+    def query_gpt3(self, prompt, model="text-davinci-003", max_tokens=16, logprobs=None, stream=False,
+                   stop=None, top_p=1, frequency_penalty=0, presence_penalty=0):
+        if model == "chatgpt":
+            messages = [{"role": "user", "content": p} for p in prompt]
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=messages,
+                max_tokens=max_tokens,
+                temperature=self.temperature,
+            )
+        else:
+            response = openai.Completion.create(
+                model=model,
+                prompt=prompt,
+                max_tokens=max_tokens,
+                logprobs=logprobs,
+                temperature=self.temperature,
+                stream=stream,
+                stop=stop,
+                top_p=top_p,
+                frequency_penalty=frequency_penalty,
+                presence_penalty=presence_penalty,
+                n=self.n_votes,
+            )
+        return response
+
+    def forward(self, prompt, process_name):
+        if not self.to_batch:
+            prompt = [prompt]
+        
+        if process_name == 'gpt3_qa':
+            # if items in prompt are tuples, then we assume it is a question and context
+            if isinstance(prompt[0], tuple) or isinstance(prompt[0], list):
+                prompt = [question.format(context) for question, context in prompt]
+
+        to_compute = None
+        results = []
+        if len(prompt) > 0:
+            if process_name == 'gpt3_qa':
+                response = self.get_qa(prompt)
+            else:  # 'gpt3_general', general prompt, has to be given all of it
+                response = self.get_general(prompt)
+        else:
+            response = []  # All previously cached
+
+        results = response
+
+        if not self.to_batch:
+            results = results[0]
+        return results

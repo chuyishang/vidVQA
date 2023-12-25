@@ -18,7 +18,7 @@ class MyDataset(Dataset):
             - fps: fps of the video
             - query_file: path to the query file
             - max_samples: maximum number of samples to use"""
-        self.path = path
+        self.path = data_path
         self.image_transforms = image_transforms
         self.fps = fps
         self.query_file = query_file
@@ -60,12 +60,11 @@ class MyDataset(Dataset):
         # Deafult transform is to transform .ToPILImage(). TODO: implement functionality for other transforms
         if not transform:
             transform = T.ToPILImage()
-            for i in range(len(video)):
-                video = [transform(video[i]) for i in range(0, video.shape[0])]
+            video = [transform(video[i]) for i in range(0, video.shape[0])]
 
         return video
     
-    def __get__item__(self, index):
+    def __getitem__(self, index):
         out_dict = self.df.iloc[index].to_dict()
         sample_path = self.get_sample_path(index)
         # Load and transform image
