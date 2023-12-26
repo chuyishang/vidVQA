@@ -9,25 +9,12 @@ dataset:                                            # Dataset configuration
     batch_size: 20                                  # Batch size
     start_sample: 0                                 # Start sample index. Only used if max_samples is not None
 
-load_models:                                        # Which pretrained models to load
-    maskrcnn: False
-    clip: False
-    glip: True
-    owlvit: False
-    tcl: False
-    gpt3_qa: True
-    gpt3_general: True
-    depth: True
-    blip: True
-    saliency: False
-    xvlm: True
-    codex: True
-
 gpt:                                                # GPT-3 configuration
     n_votes: 1                                      # Number of tries to use for GPT-3. Use with temperature > 0
-    qa_prompt: ./prompts/gpt3/gpt3_qa.txt
-    temperature: 0.                                 # Temperature for GPT-3. Almost deterministic if 0
-    model: text-davinci-003                         # See openai.Model.list() for available models
+    qa_prompt: ./prompts/base_prompt.txt
+    final_select_prompt: ./prompts/final_prompt.txt
+    temperature: 0                                  # Temperature for GPT-3. Almost deterministic if 0
+    model: gpt-3.5-turbo                            # See openai.Model.list() for available models
 
 # Saving and loading parameters
 save: True                                          # Save the results to a file

@@ -102,7 +102,7 @@ class BLIPModel(BaseModel):
         inputs = self.processor(images=image, text=prompt, return_tensors="pt", padding="longest").to(self.dev)
         if self.half_precision:
             inputs['pixel_values'] = inputs['pixel_values'].half()
-        generated_ids = self.model.generate(**inputs, length_penalty=-1, num_beams=5, max_length=10, min_length=1,
+        generated_ids = self.model.generate(**inputs, length_penalty=-1, num_beams=5, max_length=1000, min_length=1,
                                             do_sample=False, top_p=0.9, repetition_penalty=1.0,
                                             num_return_sequences=1, temperature=1)
         generated_text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)
@@ -119,16 +119,33 @@ class BLIPModel(BaseModel):
         generated_text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)
         return generated_text
 
-    def forward(self, image, question=None, task='caption'):
+    def forward(self, image, questions=None, task='caption'):
         if not self.to_batch:
-            image, question, task = [image], [question], [task]
-        if len(image) > 0 and 'float' in str(image[0].dtype) and image[0].max() <= 1:
-            image = [im * 255 for im in image]
+            image, questions, task = [image], [questions], [task]
+        # if len(image) > 0 and 'float' in str(image[0].dtype) and image[0].max() <= 1:
+        #    image = [im * 255 for im in image]
     
         # Separate into qa and caption batches.
-        prompts_qa = [self.qa_prompt.format(self.pre_question(q)) for q, t in zip(question, task) if t == 'qa']
-        images_qa = [im for i, im in enumerate(image) if task[i] == 'qa']
-        images_caption = [im for i, im in enumerate(image) if task[i] == 'caption']
+        response = []
+        if task == 'qa':
+            prompts_qa = [self.qa_prompt.format(q) for q in questions]
+            images_qa = [im for i, im in enumerate(image)]
+        else:
+            images_caption = [im for i, im in enumerate(image)]
+        with torch.cuda.device(self.dev):
+            response_qa = self.qa(images_qa, prompts_qa) if len(images_qa) > 0 else []
+            response_caption = self.caption(images_caption) if len(images_caption) > 0 else []
+        if task == 'qa':
+            return response_qa
+        else:
+            return response_caption
+        """
+        images_qa, images_caption = [], []
+        if task == 'qa':
+            prompts_qa = [self.qa_prompt.format(self.pre_question(q)) for q, t in zip(question, task) if t == 'qa']
+            images_qa = [im for i, im in enumerate(image) if task[i] == 'qa']
+        else:
+            images_caption = [im for i, im in enumerate(image) if task[i] == 'caption']
         with torch.cuda.device(self.dev):
             response_qa = self.qa(images_qa, prompts_qa) if len(images_qa) > 0 else []
             response_caption = self.caption(images_caption) if len(images_caption) > 0 else []
@@ -141,6 +158,7 @@ class BLIPModel(BaseModel):
         if not self.to_batch:
             response = response[0]
         return response
+        """
 
 class SiglipModel(BaseModel):
     name = "siglip"
@@ -183,45 +201,56 @@ class SiglipModel(BaseModel):
         # indices returns a matrix of shape [len(queries), top_k], where each row is the top_k indices for that text
         values, indices = torch.topk(text_probs, top_k)
         # TODO: implement functionality for multiple text prompts (batched)
-        
         raw_images = []
         for i in range(len(queries)):
             #raw_images.append([indices[i][idx] for idx in range(3)])
             #indices = [indices[i][idx] for idx in range(top_k)] 
             raw_images.append([images[num] for num in [indices[i][idx].item() for idx in range(top_k)]])
         # TODO: also return the index
-        return raw_images
+        return indices, raw_images
 
         
 class GPTModel(BaseModel):
-    """Model implementation for GPT."""
-    pass
-
-class GPTModel(BaseModel):
-    name = 'gpt3'
+    name = 'gpt'
     to_batch = False
     requires_gpu = False
 
-    def __init__(self, gpu_number=0):
+    def __init__(self, gpu_number=0, max_tries=1):
         super().__init__(gpu_number=gpu_number)
         # TODO: modify the prompting mechanism
-        with open(config["gpt3"]["qa_prompt"]) as f:
+        with open(config["gpt"]["qa_prompt"]) as f:
             self.qa_prompt = f.read().strip()
-        self.temperature = config["gpt3"]["temperature"]
-        self.n_votes = config["gpt3"]["n_votes"]
-        self.model = config["gpt3"]["model"]
+        self.temperature = config["gpt"]["temperature"]
+        #self.n_votes = config["gpt"]["n_votes"]
+        self.model = config["gpt"]["model"]
+        self.max_tries = max_tries
 
-    @staticmethod
-    def call_llm(prompt):
-        completion = openai.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "Follow the directions given in the next prompt carefully."},
-            {"role": "user", "content": prompt}
-        ]
-        )
-        output_message = completion.choices[0].message.content
-        return output_message
+    def call_llm(self, prompt, model="gpt-3.5-turbo", 
+                 frequency_penalty=0, presence_penalty=0, 
+                 max_tokens=1000, n=1, temperature=1):
+        for _ in range(self.max_tries):
+            try:
+                completion = openai.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": "Follow the directions given in the next prompt carefully."},
+                    {"role": "user", "content": prompt}
+                ],
+                frequency_penalty=frequency_penalty,
+                presence_penalty=presence_penalty,
+                max_tokens=max_tokens,
+                n=n,
+                temperature=temperature, 
+                )
+                output_message = completion.choices[0].message.content
+                return output_message
+            except Exception as e:
+                print("Error: ", e)
+                print("Trying again...")
+                continue
+        print("Could not get response from LLM.")
+        return None
+    
 
     @staticmethod
     def get_answer_helper(self, question, answer_choices, curr_frame, total_frames, caption, prev_info=None):
@@ -243,7 +272,7 @@ class GPTModel(BaseModel):
             print("ERROR: ", output)
 
     def final_select(self, question, choices, info):
-        with open('./prompts/final_prompt.txt') as f:
+        with open(config["gpt"]["final_select_prompt"]) as f:
             prompt = f.read()
         prompt = prompt.replace('insert_question', question)
         prompt = prompt.replace('insert_choices', str(choices))
@@ -274,97 +303,18 @@ class GPTModel(BaseModel):
     def get_union(lists):
         return list(set(chain.from_iterable(lists)))
 
-    @staticmethod
-    def most_frequent(answers):
-        """Returns the most frequent answer based on count"""
-        answer_counts = Counter(answers)
-        return answer_counts.most_common(1)[0][0]
-
-    def get_qa(self, prompts, prompt_base: str=None) -> list[str]:
-        if prompt_base is None:
-            prompt_base = self.qa_prompt
-        prompts_total = []
-        for p in prompts:
-            question = p
-            prompts_total.append(prompt_base.format(question))
-        response = self.get_qa_fn(prompts_total)
-        if self.n_votes > 1:
-            response_ = []
-            for i in range(len(prompts)):
-                if self.model == 'chatgpt':
-                    resp_i = [r['message']['content']
-                              for r in response['choices'][i * self.n_votes:(i + 1) * self.n_votes]]
-                else:
-                    resp_i = [r['text'] for r in response['choices'][i * self.n_votes:(i + 1) * self.n_votes]]
-                response_.append(self.most_frequent(resp_i))
-            response = response_
-        else:
-            if self.model == 'chatgpt':
-                response = [r['message']['content'] for r in response['choices']]
-            else:
-                response = [self.process_answer(r["text"]) for r in response['choices']]
-        return response
-
     def get_qa_fn(self, prompt):
         response = self.query_gpt3(prompt, model=self.model, max_tokens=5, logprobs=1, stream=False,
                                    stop=["\n", "<|endoftext|>"])
         return response
 
-    def get_general(self, prompts) -> list[str]:
-        if self.model == "chatgpt":
-            raise NotImplementedError
-        response = self.query_gpt3(prompts, model=self.model, max_tokens=256, top_p=1, frequency_penalty=0,
-                                   presence_penalty=0)
-        response = [r["text"] for r in response['choices']]
+    def get_general(self, prompt):
+        """Gets the general response from GPT-3."""
+        response = self.call_llm(prompt)
         return response
 
-    def query_gpt3(self, prompt, model="text-davinci-003", max_tokens=16, logprobs=None, stream=False,
-                   stop=None, top_p=1, frequency_penalty=0, presence_penalty=0):
-        if model == "chatgpt":
-            messages = [{"role": "user", "content": p} for p in prompt]
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=self.temperature,
-            )
-        else:
-            response = openai.Completion.create(
-                model=model,
-                prompt=prompt,
-                max_tokens=max_tokens,
-                logprobs=logprobs,
-                temperature=self.temperature,
-                stream=stream,
-                stop=stop,
-                top_p=top_p,
-                frequency_penalty=frequency_penalty,
-                presence_penalty=presence_penalty,
-                n=self.n_votes,
-            )
-        return response
-
+    # TODO: implement generic forward functionality with case handling
     def forward(self, prompt, process_name):
-        if not self.to_batch:
-            prompt = [prompt]
-        
-        if process_name == 'gpt3_qa':
-            # if items in prompt are tuples, then we assume it is a question and context
-            if isinstance(prompt[0], tuple) or isinstance(prompt[0], list):
-                prompt = [question.format(context) for question, context in prompt]
-
-        to_compute = None
-        results = []
-        if len(prompt) > 0:
-            if process_name == 'gpt3_qa':
-                response = self.get_qa(prompt)
-            else:  # 'gpt3_general', general prompt, has to be given all of it
-                response = self.get_general(prompt)
-        else:
-            response = []  # All previously cached
-
-        results = response
-
-        if not self.to_batch:
-            results = results[0]
-        return results
+        # temporary for now
+        response = self.get_general(prompt)
+        return response
