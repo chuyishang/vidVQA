@@ -1,3 +1,5 @@
 /models/siglip/
 api_org.key
 api.key
+*__pycache__
+.vscode
