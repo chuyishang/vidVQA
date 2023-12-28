@@ -18,7 +18,7 @@ class MyDataset(Dataset):
             - fps: fps of the video
             - query_file: path to the query file
             - max_samples: maximum number of samples to use"""
-        self.path = path
+        self.path = data_path
         self.image_transforms = image_transforms
         self.fps = fps
         self.query_file = query_file
@@ -36,7 +36,7 @@ class MyDataset(Dataset):
     def get_sample_path(self, index):
         return os.path.join(self.path, self.df.iloc[index]["video_name"])
 
-    def get_video(self, video_path, fps=30, sample_freq=None):
+    def get_video(self, video_path, fps=30, sample_freq=None, transform=None):
         """Gets a video and returns it as a tensor.
             - video_path: path to the video
             - fps: fps of the video
@@ -56,9 +56,15 @@ class MyDataset(Dataset):
             frame_idxs = frame_idxs[::sample_freq]
         video = video_reader.get_batch(frame_idxs).byte()
         video = video.permute(0, 3, 1, 2)
+
+        # Deafult transform is to transform .ToPILImage(). TODO: implement functionality for other transforms
+        if not transform:
+            transform = T.ToPILImage()
+            video = [transform(video[i]) for i in range(0, video.shape[0])]
+
         return video
     
-    def __get__item__(self, index):
+    def __getitem__(self, index):
         out_dict = self.df.iloc[index].to_dict()
         sample_path = self.get_sample_path(index)
         # Load and transform image

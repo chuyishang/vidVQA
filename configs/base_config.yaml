@@ -1,0 +1,34 @@
+multiprocessing: False                              # Run the models and samples in parallel
+path_pretrained_models: './pretrained_models'       # Path to the pretrained models
+execute_code: False                                 # Execute the code after generating it. Only applies to main_batch
+
+dataset:                                            # Dataset configuration
+    data_path: 'data'                               # Dataset path
+    split: ''                                       # Dataset split. If '', it assumes there is only one split
+    max_samples: 100                                # Maximum number of samples to load
+    batch_size: 20                                  # Batch size
+    start_sample: 0                                 # Start sample index. Only used if max_samples is not None
+
+gpt:                                                # GPT-3 configuration
+    n_votes: 1                                      # Number of tries to use for GPT-3. Use with temperature > 0
+    qa_prompt: ./prompts/base_prompt.txt
+    final_select_prompt: ./prompts/final_prompt.txt
+    temperature: 0                                  # Temperature for GPT-3. Almost deterministic if 0
+    model: gpt-3.5-turbo                            # See openai.Model.list() for available models
+
+# Saving and loading parameters
+save: True                                          # Save the results to a file
+save_new_results: True                              # If False, overwrite the results file
+results_dir: ./results/                             # Directory to save the results
+use_cache: True                                     # Use cache for the models that support it (now, GPT-3)
+clear_cache: False                                  # Clear stored cache
+use_cached_codex: False                             # Use previously-computed Codex results
+cached_codex_path: ''                               # Path to the csv results file from which to load Codex results
+log_every: 20                                       # Log accuracy every n batches
+wandb: False                                        # Use Weights and Biases
+
+blip_half_precision: True                           # Use 8bit (Faster but slightly less accurate) for BLIP if True
+blip_v2_model_type: blip2-flan-t5-xxl               # Which model to use for BLIP-2
+
+use_fixed_code: False                               # Use a fixed code for all samples (do not generate with Codex)
+fixed_code_file: ./prompts/fixed_code/blip2.prompt  # Path to the fixed code file
