@@ -1,7 +1,9 @@
 """Set of video utilities to make dealing with frames in a video easier."""
 import os
 
-class VideoInfo():
+class VideoObj():
+    """Class to work with video instances. 
+    This class stores information about videos and provides utility functions to navigate through the video."""
     def __init__(self, images, fps=30):
         self.images = images
         self.fps = fps
@@ -11,9 +13,11 @@ class VideoInfo():
         self.explanations = list()
     
     def __len__(self):
+        """Returns the length of the video in frames."""
         return self.length
 
     def __getitem__(self, index):
+        """Returns the frame at the given index."""
         return self.images[index]
 
     def get_second(self, second):

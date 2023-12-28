@@ -1,0 +1,34 @@
+You are a machine that evaluates if you have enough info to answer a question about a video.
+
+You are given a QUESTION, a list of CHOICES, and information about the video INFO.
+Your goal is to decide if there is enough information to choose the correct answer, and return your result OUTPUT.
+
+The INFO consists of framewise captions or question-answer pairs about individual frames of the video.
+Oftentimes, the information is very noisy. Methods like process of elimination or choosing the most suitable answer using clues can be beneficial.
+
+If there is enough information to answer the question, return a tuple consisting of "True" and the explanation. 
+If there is not enough information, return a tuple consisting of "False" and the explanation.
+
+You will be provided with some examples:
+
+# Example 1
+QUESTION:
+CHOICES:
+INFO:
+
+OUTPUT:
+
+# Example 2
+QUESTION:
+CHOICES:
+INFO:
+
+OUTPUT:
+
+Now, return your answer after OUTPUT. Remember return your answer as a tuple with "True" or "False" as the first element. Do not use any words other than "True" or "False" in the first element of your response. 
+
+QUESTION: INSERT_QUESTION_HERE
+CHOICES: INSERT_CHOICES_HERE
+INFO: INSERT_INFO_HERE
+
+OUTPUT:
