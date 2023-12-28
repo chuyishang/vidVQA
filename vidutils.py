@@ -1,11 +1,14 @@
 """Set of video utilities to make dealing with frames in a video easier."""
 import os
 
-class VidObj():
+class VideoInfo():
     def __init__(self, images, fps=30):
         self.images = images
         self.fps = fps
         self.length = len(images)
+        self.caption_memory = dict()
+        self.vqa_memory = dict()
+        self.explanations = list()
     
     def __len__(self):
         return self.length
