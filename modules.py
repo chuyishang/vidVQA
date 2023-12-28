@@ -103,18 +103,18 @@ class BLIPModel(BaseModel):
         if self.half_precision:
             inputs['pixel_values'] = inputs['pixel_values'].half()
         generated_ids = self.model.generate(**inputs, length_penalty=-1, num_beams=5, max_length=1000, min_length=1,
-                                            do_sample=False, top_p=0.9, repetition_penalty=1.0,
+                                            do_sample=True, top_p=0.9, repetition_penalty=1.0,
                                             num_return_sequences=1, temperature=1)
         generated_text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)
         return generated_text
 
     @torch.no_grad()
     def qa(self, image, question):
-        inputs = self.processor(images=image, text=question, return_tensors="pt", padding="longest").to(self.dev)
+        inputs = self.processor(images=image, text=self.qa_prompt.format(question), return_tensors="pt", padding="longest").to(self.dev)
         if self.half_precision:
             inputs['pixel_values'] = inputs['pixel_values'].half()
         generated_ids = self.model.generate(**inputs, length_penalty=-1, num_beams=5, max_length=1000, min_length=1,
-                                            do_sample=False, top_p=0.9, repetition_penalty=1.0,
+                                            do_sample=True, top_p=0.9, repetition_penalty=1.0,
                                             num_return_sequences=1, temperature=1)
         generated_text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)
         return generated_text
