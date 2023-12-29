@@ -52,12 +52,12 @@ class Extractor(Answerer):
     
     def query_caption(self, frame_number: int, video_info: VideoInfo) -> str:
         frame = video_info[frame_number]
-        caption = self.caption_model.caption(image=frame)
+        caption = self.caption_model.forward(image=frame)
         return caption
 
     def query_VQA(self, question: str, frame_number: int, video_info) -> str:
         frame = video_info[frame_number]
-        answer = self.vqa_model.qa(image=frame, question=question)
+        answer = self.vqa_model.forward(image=frame, question=question)
         return answer
 
     def forward():
@@ -92,12 +92,15 @@ class Planner():
     def __init__(self, llm: BaseModel):
         self.llm = llm
 
-    def create_plan(self, info: dict, question: str, choices: list):
+    def create_plan(self, info: dict, question: str, choices: list) -> list:
         prompt_path = config["planner"]["planner_prompt"]
         prompt = self.construct_prompt(question, choices, info, prompt_path)
         output = self.llm.forward(prompt)
         return output
         
+    def clean_output(self, output: list) -> list:
+        pass
+    
     def forward(self, info, question, choices):
         output = self.create_plan(info, question, choices)
         return output

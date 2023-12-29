@@ -25,6 +25,7 @@ llava:
     num_beams: 1
     max_new_tokens: 512
 
+
 # Saving and loading parameters
 save: True                                          # Save the results to a file
 save_new_results: True                              # If False, overwrite the results file

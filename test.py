@@ -1,18 +1,19 @@
-"""import modules
+import modules
 from dataset import MyDataset
 
 dataset = MyDataset(data_path="/shared/shang/datasets/nextqa/videos/",
                     query_file="/shared/shang/datasets/nextqa/metadata/queries_2k.csv",
                     max_samples=5)
 
-blip = modules.BLIPModel(gpu_number=4)
-siglip = modules.SiglipModel(gpu_number=3)
+blip = modules.BLIPModel(gpu_number=5)
+siglip = modules.SiglipModel(gpu_number=6)
 
 item = dataset[3]
 
 keyframe = siglip.forward(images=item['video'], queries=["black bird moving away from pot"])
 blip.forward(keyframe[0][0], question="Describe the scene with the most detail possible. Comment on the locations, sizes, and shapes of things as well.", task="qa")
 #blip.qa(keyframe[0][0], question="Describe the scene with the most detail possible. Comment on the locations, sizes, and shapes of things as well.")"""
+
 """
 from models.LLaVA.llava.eval import run_llava
 
@@ -36,7 +37,6 @@ args = type('Args', (), {
 
 result = run_llava.eval_model(args)
 print(result)
-"""
 
 
 import modules
@@ -49,8 +49,9 @@ dataset = MyDataset(data_path="/shared/shang/datasets/nextqa/videos/",
                     max_samples=5)
 
 item = dataset[3]
-image = item["video"][5]
+image1 = item["video"][5]
+image2 = item["video"][500]
 
 llava = modules.LLAVA(gpu_number=5)
-output = llava.forward([image], question="Describe the image. What is going on?")
-print(output)
+output = llava.forward([image1, image2], question="Describe the image. What is going on?")
+print(output)"""

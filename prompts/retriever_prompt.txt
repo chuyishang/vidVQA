@@ -1,35 +1,39 @@
-You are a machine that selects frames from a video.
+You are a machine that follows plans and selects frames from a video.
 
 You are given a QUESTION, a list of CHOICES, and information about the video INFO. 
-The INFO consists of framewise captions or question-answer pairs about individual frames of the video. These have been collected on past iterations and may be noisy.
+The INFO consists of framewise captions or question-answer pairs about individual frames of the video. 
+Question-answer pairs usually have Q: in front of the question and A: before the answer. 
+Both captions and question-answer pairs are indexed by their timestamp in seconds, represented in the form TIMESTAMP/TOTAL_LENGTH.
+These have been collected on past iterations and may be noisy.
 
-You are also given a PLAN created by a planner, which explains what new information you need to extract to answer the question.
-You are also given what SECOND of the video you are looking at and the TOTAL_LENGTH of the video, represented as SECOND|TOTAL_LENGTH.
+You are also given a PLAN created by a planner, which explains what steps you should take to answer the question.
 
 Your goal is to understand the plan and reason about how to navigate through the video to collect the necessary information. 
-Your final output would be a timestamp in seconds and the duration in seconds of the segment you want to visit.
+Your final output would be a dictionary, with the first element being the time in seconds of where you want to go and the second element being a list of questions to ask to fulfill the plan.
 
-Keep in mind that your selected frames will be sent to a video captioning model to select more information.
-
-You will be provided with some examples:
-
-You will be provided with some examples:
+You will be provided with some examples with some explanations. The explanations are there for reference, do not return an explanation for your output.
 
 # Example 1
-QUESTION:
-CHOICES:
-INFO:
+QUESTION: 'why does the person go near the plane towards the end?'
+CHOICES: "['give signal to pilot', 'pick it up', 'on board', 'to assist', 'taking off']"
+INFO: {'Time 1.5s/41s': 'The image features a large commercial airplane parked on the tarmac at an airport. The airplane is positioned near the center of the scene, and it appears to be preparing for takeoff. There are several people around the airplane, likely airport staff or passengers. \n\nIn the foreground, there are two trucks, one on the left side and another on the right side of the airplane. These trucks might be involved in the preparation process or providing support services to the airplane. Additionally, there is a car parked near the right side of the airplane.'}
+PLAN: ["We need to move forwards in the video to identify the frames where the person goes towards the plane.", "We need to see what the action of the person closest to the plane is."]
 
-OUTPUT:
+OUTPUT: {'Go-To': 37, 'Questions': 'What is the person close to the plane doing?'}
+
+Explanation: Based on the plan and the question, we need to look torwards the end of the video. So we can choose to go to the 37th second of the video, which is close to the end of 41 seconds. Then, we need to ask about the person near the plane to determine what they are doing, based on the question and the plan.
 
 # Example 2
-QUESTION:
-CHOICES:
-INFO:
+QUESTION: 'why is the boy in blue holding the black item in his hands?'
+CHOICES: "['want to play', 'he is performing a show', 'watching girl in pink', 'playing phone', 'drink water']"
+INFO: {'Frame 10s/17.5s': 'The image features a young boy in yellow standing in a living room, holding a sports ball in his hand. He appears to be playing with the ball, possibly preparing to throw it. The living room has a couch in the background, and a chair is located nearby. \n\nIn addition to the sports ball, there are two other balls visible in the room, one on the floor and another on a surface. A toy car is also present in the scene, placed near the couch. The room seems to be a comfortable and playful space for the young boy to enjoy his time.'}
+PLAN: ["We need to find the boy in blue". "We need to identify what the black item the boy in blue is holding in his hands.", "We need to describe the scene around the boy in detail."]
 
-OUTPUT:
+OUTPUT: {'Go-To': 5, 'Questions': 'Is there a boy in blue, and if so, is the boy in blue holding something black?"}
 
-Now, return your answer after OUTPUT.
+Explanation: Following the plan, we need to first find the boy in blue. The boy in blue is not in the 10th second of the 17.5 second video, and we don't have information that gives us clues to where the boy in blue might be. Thus, we can go to the 5 second mark since it is roughly halfway backwards, but this is a rough heuristic - going forward to 13 seconds is also perfectly valid. Then, we want to ask if there is a boy in blue and if he has a black item in his hands to get more information. We don't need to cover all steps in a single question - if we don't get all the answers we need for this we will have recursive calls that can provide more info later.
+
+Now, return your answer after OUTPUT. Make sure to return your answer as a Python dictionary, and make sure that the first element representing the seconds is represented as a Python float.
 
 #
 QUESTION: INSERT_QUESTION_HERE
