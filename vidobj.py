@@ -4,13 +4,15 @@ import os
 class VideoObj():
     """Class to work with video instances. 
     This class stores information about videos and provides utility functions to navigate through the video."""
-    def __init__(self, images, fps=30):
+    def __init__(self, images, question, choices, fps=30):
+        self.question = question
+        self.choices = choices
         self.images = images
         self.fps = fps
         self.length = len(images)
-        self.caption_memory = dict()
-        self.vqa_memory = dict()
+        self.info = {}
         self.explanations = list()
+        self.length_secs = self.length / self.fps
     
     def __len__(self):
         """Returns the length of the video in frames."""
@@ -19,8 +21,12 @@ class VideoObj():
     def __getitem__(self, index):
         """Returns the frame at the given index."""
         return self.images[index]
+    
+    def get_second_from_frame(self, frame):
+        """Helper function to convert a frame index to a second"""
+        return frame / self.fps
 
-    def get_second(self, second):
+    def get_frame_from_second(self, second):
         """Retrieve a specific frame at a given second"""
         idx = int(second * self.fps)
         return [idx], self.images[idx]

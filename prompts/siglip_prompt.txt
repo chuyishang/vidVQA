@@ -24,6 +24,5 @@ OUTPUT: "woman recieving present from boy"
 Now, start completion after OUTPUT. Make sure your response is a string. Remember that you want to output a prompt that will be able to find the most relevant frame from a video based on the question.
 
 ###
-QUESTION: insert_question
+QUESTION: INSERT_QUESTION_HERE
 OUTPUT:
-

@@ -25,6 +25,16 @@ llava:
     num_beams: 1
     max_new_tokens: 512
 
+answerer:
+    siglip_prompt: /home/shang/vidVQA/prompts/siglip_prompt.txt
+planner:
+    planner_prompt: /home/shang/vidVQA/prompts/planner_prompt.txt
+retriever:
+    retriever_prompt: /home/shang/vidVQA/prompts/retriever_prompt.txt
+extractor:
+    extractor_prompt: null
+evaluator:
+    evaluator_prompt: /home/shang/vidVQA/prompts/evaluator_prompt.txt
 
 # Saving and loading parameters
 save: True                                          # Save the results to a file

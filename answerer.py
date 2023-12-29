@@ -1,7 +1,8 @@
-from modules import BaseModel
-from vidutils import VideoInfo
 import abc
-from vidutils import VideoObj
+import ast
+
+from modules import BaseModel
+from vidobj import VideoObj
 from config import settings as config
 
 """
@@ -30,75 +31,139 @@ Answerer Process:
     - Retrieves frames based on plan
     - Sends info back to Extractor
 """
-# ========================== Base abstract model ========================== #
+# ========================== Base answerer model ========================== #
 class Answerer():
-    def __init__(self, caption_model: BaseModel, vqa_model: BaseModel, llm: BaseModel, video_obj: VideoObj):
+    def __init__(self, caption_model: BaseModel, vqa_model: BaseModel, similarity_model: BaseModel, llm: BaseModel, video_obj: VideoObj):
+        self.similarity_model = similarity_model
         self.caption_model = caption_model
         self.vqa_model = vqa_model
         self.llm = llm
         self.video = video_obj
 
-        # TODO: initialize the 4 other classes here
-
+        self.planner = Planner(self)
+        self.retriever = Retriever(self)
+        self.extractor = Extractor(self)
+        self.evaluator = Evaluator(self)
+        
     def construct_prompt(question: str, choices: list, video_info, prompt_path: str) -> str:
         with open(prompt_path) as f:
             prompt = f.read()
         prompt = prompt.replace("INSERT_QUESTION_HERE", question).replace("INSERT_CHOICES_HERE", str(choices)).replace("INSERT_INFO_HERE", str(video_info))
         return prompt
+    
+    def siglip_prompt(self, question: str) -> str: 
+        with open(config["answerer"]["siglip_prompt"]) as f:
+            prompt = f.read()
+        prompt = prompt.replace("INSERT_QUESTION_HERE", question)
+        return prompt
+
+    def get_keyframe(self, images, question):
+        siglip_prompt = self.siglip_prompt(question)
+        keyframe_query = self.llm.forward(siglip_prompt)
+        index, keyframe = self.similarity_model.forward(images, keyframe_query)
+        return index.item(), keyframe[0][0]
+    
+    def construct_info(self, start_sec, end_sec, answer, question=None, type="caption"):
+        key = f"Time {start_sec}/{end_sec}"
+        if type == "caption":
+            return key, answer
+        else: #qa case
+            qa_pair = f"Q - {question} A - {answer}"
+            return key, qa_pair
+
+
+    def init_update(self):
+        start_frame, start_image = self.get_keyframe(self.video.images, self.question)
+        start_sec, end_sec = self.video.get_frame_from_second(start_frame), self.video.get_frame_from_second(len(self.video))
+        caption = self.extractor.forward(start_image, type="caption")
+
+        init_key, init_info = self.construct_info(start_sec, end_sec, caption)
+        self.video.info[init_key] = init_info
+
+    def forward(self):
+        self.init_update()
+        plan = self.planner.forward(self)
+        new_tstmp, frame, questions = self.retriever.forward(self, plan)
+
+
+
 
 class Extractor(Answerer):
-    def __init__(self, caption_model: BaseModel, vqa_model: BaseModel, llm: BaseModel):
-        super().__init__(caption_model, vqa_model, llm, video_obj)
-    
-    def query_caption(self, frame_number: int, video_info: VideoInfo) -> str:
-        frame = video_info[frame_number]
-        caption = self.caption_model.forward(image=frame)
+    def get_caption(self, image):
+        caption_base = "Describe the image in as much detail as possible."
+        caption = self.vqa_model.forward([image], caption_base)
         return caption
-
-    def query_VQA(self, question: str, frame_number: int, video_info) -> str:
-        frame = video_info[frame_number]
-        answer = self.vqa_model.forward(image=frame, question=question)
+    
+    def get_vqa(self, image, question):
+        answer = self.vqa_model.forward([image], question)
         return answer
 
-    def forward():
-        pass
+    def forward(self, image, questions=None, start_sec=0, end_sec=0, caption=True):
+        """Forward function for Extractor. Takes in a single image, and questions as a list"""
+        caption_base = "Describe the image in as much detail as possible."
+        results = []
+        if caption:
+            new_caption = self.get_caption(image)
+            results.append(caption)
+            key, text = self.construct_info(start_sec, end_sec=self.length_secs, answer=new_caption, type="caption")
+            results.append(text)
+        if questions:
+            for question in questions:
+                new_answer = self.get_vqa(image, question)
+                key, qa_pair = self.construct_info(start_sec, end_sec=self.length_secs, answer=new_answer, question=question, type="qa")
+                results.append(qa_pair)
+        
+        self.video.info["key"] = results
 
 class Evaluator(Answerer):
-    def __init__(self, llm: BaseModel, info: dict, question: str, choices: list):
-        self.llm = llm
-        self.enough_info = False
-    
-    @staticmethod
+
+    """@staticmethod
     def construct_prompt(question: str, choices: list, video_info, prompt_path: str) -> str:
         with open(prompt_path) as f:
             prompt = f.read()
         prompt = prompt.replace("INSERT_QUESTION_HERE", question).replace("INSERT_CHOICES_HERE", str(choices)).replace("INSERT_INFO_HERE", str(video_info))
         return prompt
+    """
         
-    def evaluate_info(self, question: str, choices: list, video_info) -> str:
-        prompt_path = config["evaluator"]["enough_info_prompt"]
-        prompt =  self.construct_prompt(question, choices, video_info, prompt_path)
+    def evaluate_info(self, question: str, choices: list, video) -> str:
+        prompt_path = config["evaluator"]["evaluator_prompt"]
+        prompt =  self.construct_prompt(question, choices, video.info, prompt_path)
         output = self.llm.forward(prompt)
         return output
+
+
 
     def final_select(self, question: str, choices: list, video_info):
-        prompt_path = config["evaluator"]["enough_info_prompt"]
+        prompt_path = config["evaluator"]["final_select"]
         prompt =  self.construct_prompt(question, choices, video_info, prompt_path)
         output = self.llm.forward(prompt)
-        return output
+        return int(output)
 
+    
+    def parse_output(self, answer):
+        try:
+            output = ast.literal_eval(answer)
+            final_choice = output[0]
+            return final_choice
+        except Exception as e:
+            print(e)
+    
+    def forward(self, question: str, choices: list, video, final_choice=False):
+        if not final_choice:
+            output = self.evaluate_info(question, choices, video)
+        else:
+            output = self.final_select(question, choices, video.info)
+        final_output = self.parse_output(output)
+        return final_output
 
 class Planner():
-    def __init__(self, llm: BaseModel):
-        self.llm = llm
-
-    def create_plan(self, info: dict, question: str, choices: list) -> list:
+    def create_plan(self, video):
         prompt_path = config["planner"]["planner_prompt"]
-        prompt = self.construct_prompt(question, choices, info, prompt_path)
+        prompt = self.construct_prompt(video.question, video.choices, video.info, prompt_path)
         output = self.llm.forward(prompt)
         return output
         
-    def clean_output(self, output: list) -> list:
+    def clean_output(self, output: list):
         pass
     
     def forward(self, info, question, choices):
@@ -106,41 +171,32 @@ class Planner():
         return output
 
 class Retriever():
-    def __init__():
-        pass
-    def select_frame():
-        pass
-
-
-class Answerer():
-    """Main class for answering questions."""
-    def __init__(self, caption_model: BaseModel, vqa_model: BaseModel, llm: BaseModel):
-        self.caption_model = caption_model
-        self.vqa_model = vqa_model
-        self.llm = llm
-
-    def construct_prompt(self, question: str, choices: list, video_info: VideoInfo) -> str:
-        pass
+    # TODO: modify prompt to accept multiple question asking
+    def select_frame(self, video, plan):
+        prompt_path = config["retriever"]["retriever_prompt"]
+        prompt = self.construct_prompt(video.question, video.choices, video.info, prompt_path).replace("INSERT_PLAN_HERE", plan)
+        output = self.llm.forward(prompt)
+        return output
     
-    def query_caption(self, frame_number: int, video_info: VideoInfo) -> str:
-        frame = video_info[frame_number]
-        caption = self.caption_model.caption(image=frame)
-        return caption
-
-    def query_VQA(self, question: str, frame_number: int, video_info) -> str:
-        frame = video_info[frame_number]
-        answer = self.vqa_model.qa(image=frame, question=question)
-        return answer
-
-    def select_frame():
-        pass
-
-    def get_answer(self, question: str, subquestion: str, choices: list, video_info: VideoInfo, LIMIT: int=10):
-        """Main functionality for retrieving an answer to a question."""
-        pass
-
+    def parse_answer(self, answer):
+        try:
+            output = ast.literal_eval(answer)
+            goto = output['Go-To']
+            goto = float(goto)
+            questions = output["Questions"]
+            frame = self.obj.get_frame_from_second(goto)
+            return goto, frame, questions
+        except Exception as e:
+            print(e)
     
+    def forward(self, video, plan):
+        output = self.select_frame(video, plan)
+        goto, frame, questions = self.parse_answer(output)
+        return goto, frame, questions
         
+
+
+
 
 
 """

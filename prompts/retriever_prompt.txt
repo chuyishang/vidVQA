@@ -39,5 +39,6 @@ Now, return your answer after OUTPUT. Make sure to return your answer as a Pytho
 QUESTION: INSERT_QUESTION_HERE
 CHOICES: INSERT_CHOICES_HERE
 INFO: INSERT_INFO_HERE
+PLAN: INSERT_PLAN_HERE
 
 OUTPUT:

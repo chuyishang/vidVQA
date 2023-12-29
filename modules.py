@@ -337,7 +337,7 @@ class GPTModel(BaseModel):
         return response
 
     # TODO: implement generic forward functionality with case handling
-    def forward(self, prompt, process_name):
+    def forward(self, prompt, process_name=None):
         # temporary for now
         response = self.get_general(prompt)
         return response
