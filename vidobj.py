@@ -29,6 +29,7 @@ class VideoObj():
     def get_frame_from_second(self, second):
         """Retrieve a specific frame at a given second"""
         idx = int(second * self.fps)
+        
         return [idx], self.images[idx]
      
     def convert_to_frame(self, second):
@@ -69,5 +70,6 @@ class VideoObj():
             return self.get_block(current + step_size)
         elif direction == "backward":
             return self.get_block(current - step_size)
+        
 
 

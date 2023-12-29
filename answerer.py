@@ -33,12 +33,13 @@ Answerer Process:
 """
 # ========================== Base answerer model ========================== #
 class Answerer():
-    def __init__(self, caption_model: BaseModel, vqa_model: BaseModel, similarity_model: BaseModel, llm: BaseModel, video_obj: VideoObj):
+    def __init__(self, caption_model: BaseModel, vqa_model: BaseModel, similarity_model: BaseModel, llm: BaseModel, video_obj: VideoObj, max_tries=10):
         self.similarity_model = similarity_model
         self.caption_model = caption_model
         self.vqa_model = vqa_model
         self.llm = llm
         self.video = video_obj
+        self.max_tries = max_tries
 
         self.planner = Planner(self)
         self.retriever = Retriever(self)
@@ -60,7 +61,7 @@ class Answerer():
     def get_keyframe(self, images, question):
         siglip_prompt = self.siglip_prompt(question)
         keyframe_query = self.llm.forward(siglip_prompt)
-        index, keyframe = self.similarity_model.forward(images, keyframe_query)
+        index, keyframe = self.similarity_model.forward(images, queries=[keyframe_query])
         return index.item(), keyframe[0][0]
     
     def construct_info(self, start_sec, end_sec, answer, question=None, type="caption"):
@@ -73,8 +74,8 @@ class Answerer():
 
 
     def init_update(self):
-        start_frame, start_image = self.get_keyframe(self.video.images, self.question)
-        start_sec, end_sec = self.video.get_frame_from_second(start_frame), self.video.get_frame_from_second(len(self.video))
+        start_frame, start_image = self.get_keyframe(self.video.images, self.video.question)
+        start_sec, end_sec = self.video.get_second_from_frame(start_frame), self.video.get_second_from_frame(len(self.video))
         caption = self.extractor.forward(start_image, type="caption")
 
         init_key, init_info = self.construct_info(start_sec, end_sec, caption)
@@ -82,41 +83,50 @@ class Answerer():
 
     def forward(self):
         self.init_update()
-        plan = self.planner.forward(self)
-        new_tstmp, frame, questions = self.retriever.forward(self, plan)
-
+        for _ in range(self.max_tries):
+            plan = self.planner.forward()
+            new_tstmp, frame, questions = self.retriever.forward(plan)
+            self.extractor.forward(frame, questions, new_tstmp)
+            final_choice = self.evaluator.forward(self.question, self.choices, self.video)
+            if final_choice:
+                return final_choice
+        return self.evaluator.forward(self.question, self.choices, self.video, final_choice=True)
 
 
 
 class Extractor(Answerer):
+    def __init__(self, answerer):
+        self.answerer = answerer
+
     def get_caption(self, image):
         caption_base = "Describe the image in as much detail as possible."
-        caption = self.vqa_model.forward([image], caption_base)
+        caption = self.answerer.vqa_model.forward([image], caption_base)
         return caption
     
     def get_vqa(self, image, question):
-        answer = self.vqa_model.forward([image], question)
+        answer = self.answerer.qa_model.forward([image], question)
         return answer
 
-    def forward(self, image, questions=None, start_sec=0, end_sec=0, caption=True):
+    def forward(self, image, questions=None, start_sec=0, caption=True):
         """Forward function for Extractor. Takes in a single image, and questions as a list"""
         caption_base = "Describe the image in as much detail as possible."
         results = []
         if caption:
             new_caption = self.get_caption(image)
             results.append(caption)
-            key, text = self.construct_info(start_sec, end_sec=self.length_secs, answer=new_caption, type="caption")
+            key, text = self.answerer.construct_info(start_sec, end_sec=self.answerer.video.length_secs, answer=new_caption, type="caption")
             results.append(text)
         if questions:
             for question in questions:
                 new_answer = self.get_vqa(image, question)
-                key, qa_pair = self.construct_info(start_sec, end_sec=self.length_secs, answer=new_answer, question=question, type="qa")
+                key, qa_pair = self.answerer.construct_info(start_sec, end_sec=self.answerer.video.length_secs, answer=new_answer, question=question, type="qa")
                 results.append(qa_pair)
-        
-        self.video.info["key"] = results
+        # TODO: check if this is expected behavior
+        self.answerer.video.info["key"] = results
 
 class Evaluator(Answerer):
-
+    def __init__(self, answerer):
+        self.answerer = answerer
     """@staticmethod
     def construct_prompt(question: str, choices: list, video_info, prompt_path: str) -> str:
         with open(prompt_path) as f:
@@ -127,16 +137,16 @@ class Evaluator(Answerer):
         
     def evaluate_info(self, question: str, choices: list, video) -> str:
         prompt_path = config["evaluator"]["evaluator_prompt"]
-        prompt =  self.construct_prompt(question, choices, video.info, prompt_path)
-        output = self.llm.forward(prompt)
+        prompt =  self.answerer.construct_prompt(question, choices, video.info, prompt_path)
+        output = self.answerer.llm.forward(prompt)
         return output
 
 
 
     def final_select(self, question: str, choices: list, video_info):
         prompt_path = config["evaluator"]["final_select"]
-        prompt =  self.construct_prompt(question, choices, video_info, prompt_path)
-        output = self.llm.forward(prompt)
+        prompt =  self.answerer.construct_prompt(question, choices, video_info, prompt_path)
+        output = self.answerer.llm.forward(prompt)
         return int(output)
 
     
@@ -157,10 +167,13 @@ class Evaluator(Answerer):
         return final_output
 
 class Planner():
+    def __init__(self, answerer):
+        self.answerer = answerer
+
     def create_plan(self, video):
         prompt_path = config["planner"]["planner_prompt"]
-        prompt = self.construct_prompt(video.question, video.choices, video.info, prompt_path)
-        output = self.llm.forward(prompt)
+        prompt = self.answerer.construct_prompt(video.question, video.choices, video.info, prompt_path)
+        output = self.answerer.llm.forward(prompt)
         return output
         
     def clean_output(self, output: list):
@@ -171,11 +184,14 @@ class Planner():
         return output
 
 class Retriever():
+    def __init__(self, answerer):
+        self.answerer = answerer
+
     # TODO: modify prompt to accept multiple question asking
     def select_frame(self, video, plan):
         prompt_path = config["retriever"]["retriever_prompt"]
-        prompt = self.construct_prompt(video.question, video.choices, video.info, prompt_path).replace("INSERT_PLAN_HERE", plan)
-        output = self.llm.forward(prompt)
+        prompt = self.answerer.construct_prompt(video.question, video.choices, video.info, prompt_path).replace("INSERT_PLAN_HERE", plan)
+        output = self.answerer.llm.forward(prompt)
         return output
     
     def parse_answer(self, answer):
@@ -184,7 +200,7 @@ class Retriever():
             goto = output['Go-To']
             goto = float(goto)
             questions = output["Questions"]
-            frame = self.obj.get_frame_from_second(goto)
+            frame = self.answerer.video.get_frame_from_second(goto)
             return goto, frame, questions
         except Exception as e:
             print(e)
