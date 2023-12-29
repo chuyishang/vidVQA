@@ -345,15 +345,18 @@ class GPTModel(BaseModel):
 class LLAVA(BaseModel):
     name = 'llava'
     to_batch = False
-    requires_gpu = False
+    requires_gpu = True
 
     def __init__(self, gpu_number=0, max_tries=1):
-        super().__init__(gpu_number=gpu_number)
-        disable_torch_init()
-        self.model_name = get_model_name_from_path(config["llava"]["model_path"])
-        self.tokenizer, self.model, self.image_processor, self.devcontext_len = load_pretrained_model(
-            config["llava"]["model_path"], config["llava"]["model_base"], self.model_name
-        )
+        super().__init__(gpu_number)
+        with torch.cuda.device(self.dev):
+            disable_torch_init()
+            self.model_name = get_model_name_from_path(config["llava"]["model_path"])
+            self.tokenizer, self.model, self.image_processor, self.devcontext_len = load_pretrained_model(
+                config["llava"]["model_path"], config["llava"]["model_base"], self.model_name, 
+                load_8bit=False, load_4bit=False,
+                device_map="auto", device=self.dev
+            )
 
     def image_parser(self, image_file):
         out = image_file.split(",")
@@ -374,7 +377,7 @@ class LLAVA(BaseModel):
             image = Image.open(image_file).convert("RGB")
         return image_file
         
-    def forward(self, images, question):
+    def forward(self, image_list, question):
         """Forward method
         Args:
             - images
@@ -417,23 +420,26 @@ class LLAVA(BaseModel):
         prompt = conv.get_prompt()
     
         
-        image_files = self.image_parser(args)
-        images = self.load_images(image_files)
+        #image_files = self.image_parser(image_list)
+        #images = self.load_images(image_files)
+        # TODO: Check if this works
+        images = image_list
+
         images_tensor = process_images(
             images,
             self.image_processor,
             self.model.config
-        ).to(self.model.device, dtype=torch.float16)
+        ).to(self.dev, dtype=torch.float16)
     
         input_ids = (
             tokenizer_image_token(prompt, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors="pt")
             .unsqueeze(0)
-            .cuda()
+            .to(self.dev)
         )
 
         stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
         keywords = [stop_str]
-        stopping_criteria = KeywordsStoppingCriteria(keywords, tokenizer, input_ids)
+        stopping_criteria = KeywordsStoppingCriteria(keywords, self.tokenizer, input_ids)
 
         with torch.inference_mode():
             output_ids = self.model.generate(
@@ -441,9 +447,9 @@ class LLAVA(BaseModel):
                 images=images_tensor,
                 do_sample=True if config["llava"]["temperature"] > 0 else False,
                 temperature= config["llava"]["temperature"],
-                top_p=args.top_p,
-                num_beams=args.num_beams,
-                max_new_tokens=args.max_new_tokens,
+                top_p=config["llava"]["top_p"],
+                num_beams=config["llava"]["num_beams"],
+                max_new_tokens=config["llava"]["max_new_tokens"],
                 use_cache=True,
                 stopping_criteria=[stopping_criteria],
             )

@@ -13,6 +13,7 @@ item = dataset[3]
 keyframe = siglip.forward(images=item['video'], queries=["black bird moving away from pot"])
 blip.forward(keyframe[0][0], question="Describe the scene with the most detail possible. Comment on the locations, sizes, and shapes of things as well.", task="qa")
 #blip.qa(keyframe[0][0], question="Describe the scene with the most detail possible. Comment on the locations, sizes, and shapes of things as well.")"""
+"""
 from models.LLaVA.llava.eval import run_llava
 
 model_path = "/home/shang/vidVQA/models/LLaVA/llava-v1.5-7b"
@@ -35,3 +36,21 @@ args = type('Args', (), {
 
 result = run_llava.eval_model(args)
 print(result)
+"""
+
+
+import modules
+from dataset import MyDataset
+
+from dataset import MyDataset
+
+dataset = MyDataset(data_path="/shared/shang/datasets/nextqa/videos/",
+                    query_file="/shared/shang/datasets/nextqa/metadata/queries_2k.csv",
+                    max_samples=5)
+
+item = dataset[3]
+image = item["video"][5]
+
+llava = modules.LLAVA(gpu_number=5)
+output = llava.forward([image], question="Describe the image. What is going on?")
+print(output)

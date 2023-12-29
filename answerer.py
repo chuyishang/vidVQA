@@ -46,9 +46,6 @@ class Answerer():
         prompt = prompt.replace("INSERT_QUESTION_HERE", question).replace("INSERT_CHOICES_HERE", str(choices)).replace("INSERT_INFO_HERE", str(video_info))
         return prompt
 
-
-
-
 class Extractor(Answerer):
     def __init__(self, caption_model: BaseModel, vqa_model: BaseModel, llm: BaseModel):
         super().__init__(caption_model, vqa_model, llm, video_obj)

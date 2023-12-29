@@ -16,6 +16,15 @@ gpt:                                                # GPT-3 configuration
     temperature: 0                                  # Temperature for GPT-3. Almost deterministic if 0
     model: gpt-3.5-turbo                            # See openai.Model.list() for available models
 
+llava:
+    model_path: /home/shang/vidVQA/models/LLaVA/llava-v1.5-7b
+    model_base: null
+    conv_mode: null
+    temperature: 0.2
+    top_p: null
+    num_beams: 1
+    max_new_tokens: 512
+
 # Saving and loading parameters
 save: True                                          # Save the results to a file
 save_new_results: True                              # If False, overwrite the results file
