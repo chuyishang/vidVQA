@@ -5,8 +5,7 @@ You have access to a image captioning module that you can use to caption individ
 However, this image captioning module is often very vague and can't find specific details. Keep these limitations into account when making your plans.
 
 The INFO consists of framewise captions or question-answer pairs about individual frames of the video. These have been collected on past iterations and may be noisy.
-
-You should decide what additional information you need to be able to choose one of the answer choices. Return your plan as a list of actions.
+You should decide what additional information you need to be able to choose one of the answer choices. Return your plan as a python list of strings representing each action.
 
 You will be provided with some examples:
 

@@ -51,9 +51,7 @@ class Answerer():
 
 class Extractor(Answerer):
     def __init__(self, caption_model: BaseModel, vqa_model: BaseModel, llm: BaseModel):
-        self.caption_model = caption_model
-        self.vqa_model = vqa_model
-        self.llm = llm
+        super().__init__(caption_model, vqa_model, llm, video_obj)
     
     def query_caption(self, frame_number: int, video_info: VideoInfo) -> str:
         frame = video_info[frame_number]
@@ -97,11 +95,19 @@ class Planner():
     def __init__(self, llm: BaseModel):
         self.llm = llm
 
-    def create_plan():
-
+    def create_plan(self, info: dict, question: str, choices: list):
+        prompt_path = config["planner"]["planner_prompt"]
+        prompt = self.construct_prompt(question, choices, info, prompt_path)
+        output = self.llm.forward(prompt)
+        return output
         
+    def forward(self, info, question, choices):
+        output = self.create_plan(info, question, choices)
+        return output
 
 class Retriever():
+    def __init__():
+        pass
     def select_frame():
         pass
 
