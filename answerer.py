@@ -1,6 +1,5 @@
 import abc
 import ast
-
 from modules import BaseModel
 from vidobj import VideoObj
 from config import settings as config
@@ -91,13 +90,17 @@ class Answerer():
         self.init_update()
         for i in range(self.max_tries):
             logging.info(f"TRY: {i}/{self.max_tries}")
-            plan = self.planner.forward(self.video)
-            logging.info(f'PLAN: {plan}')
-            new_tstmp, frame, questions = self.retriever.forward(self.video, plan)
-            logging.info(f'NEW TIME: {new_tstmp}, NEW FRAME: {frame}, NEW QUESTIONS: {questions}')
+            # Planner
+            plan, explanation = self.planner.forward(self.video)
+            logging.info(f'PLAN: {plan}\nEXPLANATION: {explanation}')
+            # Retriever
+            new_tstmp, frame, questions, explanation = self.retriever.forward(self.video, plan)
+            logging.info(f'NEW TIME: {new_tstmp}, NEW FRAME: {frame}, NEW QUESTIONS: {questions}, EXPLANATION: {explanation}')
+            # Extractor
             key, ans = self.extractor.forward(frame[1], questions, new_tstmp)
             self.video.info[key] = ans
-            logging.info(f"INFO: {self.video.info}")
+            logging.info(f"KEY: {key}, ANSWER: {ans}")
+            # Evaluator
             final_choice = self.evaluator.forward(self.video.question, self.video.choices, self.video)
             logging.info(f"FINAL CHOICE: {final_choice}")
             if final_choice:
@@ -118,7 +121,7 @@ class Extractor(Answerer):
         return answer
 
     def forward(self, image: PIL.Image.Image, questions: list[str] = None, start_sec: int = 0, caption: bool = True) -> (str, str):
-        """Forward function for Extractor. Takes in a single image, and questions as a list"""
+        """Forward function for Extractor. Takes in a single image, and questions as a list. By default, captions the image."""
         results = []
         if caption:
             new_caption = self.get_caption(image)
@@ -162,6 +165,7 @@ class Evaluator(Answerer):
         try:
             output = ast.literal_eval(answer)
             final_choice = output[0]
+            logging.info(f"Explanation: {output[1]}")
             return final_choice
         except Exception as e:
             print(e)
@@ -182,14 +186,19 @@ class Planner():
         prompt_path = config["planner"]["planner_prompt"]
         prompt = self.answerer.construct_prompt(video.question, video.choices, video.info, prompt_path)
         output = self.answerer.llm.forward(prompt)
-        return output
+        output = ast.literal_eval(output)
+        # modification for explanation
+        return output[0], output[1]
         
     def clean_output(self, output: list[str]) -> list[str]:
         pass
     
     def forward(self, video: VideoObj) -> list[str]:
-        output = self.create_plan(video)
-        return output
+        output, explanation = self.create_plan(video)
+        # explanation modification
+        if type(output) != str:
+            output = str(output)
+        return output, explanation
 
 class Retriever():
     def __init__(self, answerer):
@@ -208,15 +217,16 @@ class Retriever():
             goto = output['Go-To']
             goto = float(goto)
             questions = output["Questions"]
+            explanation = output["Explanation"]
             frame = self.answerer.video.get_frame_from_second(goto)
-            return goto, frame, questions
+            return goto, frame, questions, explanation
         except Exception as e:
             print(e)
     
     def forward(self, video: VideoObj, plan: list[str]) -> (float, PIL.Image.Image, list[str]):
         output = self.select_frame(video, plan)
-        goto, frame, questions = self.parse_answer(output)
-        return goto, frame, questions
+        goto, frame, questions, explanation = self.parse_answer(output)
+        return goto, frame, questions, explanation
         
 
 

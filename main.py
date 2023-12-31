@@ -15,4 +15,5 @@ llava = modules.LLAVA(gpu_number=5)
 
 llm = modules.GPTModel()
 ans = answerer.Answerer(llava, llava, siglip, llm, video)
-ans.forward()
+result = ans.forward()
+print(result)

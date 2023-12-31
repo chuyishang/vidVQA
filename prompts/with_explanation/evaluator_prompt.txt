@@ -1,0 +1,42 @@
+You are a machine that evaluates if you have enough info to answer a question about a video.
+
+You are given a QUESTION, a list of CHOICES, and information about the video INFO.
+Your goal is to decide if there is enough information to choose the correct answer, and return your result OUTPUT.
+
+The INFO consists of framewise captions or question-answer pairs about individual frames of the video.
+Oftentimes, the information is very noisy. Methods like process of elimination or choosing the most suitable answer using clues can be beneficial.
+
+If there is enough information to answer the question, return a tuple consisting of the index of the correct answer (0-indexed) and the explanation. 
+If there is not enough information, return a tuple consisting of None and the explanation.
+
+You will be provided with some examples:
+
+# Example 1
+QUESTION: 'why is the woman holding a knife?'
+CHOICES: "['cutting a pumpkin', 'show man how to cut watermelon', 'cake spill', 'split the cake', 'remove the tendons and fat']"
+INFO: {'Time 14.3s/44s': "The image features a person cutting a large, orange pumpkin with a pair of scissors. The pumpkin is placed on a table, and the person is focused on cutting it carefully. The scissors are positioned towards the center of the pumpkin, with the person's hands holding the handles. The scene captures the process of preparing the pumpkin for a specific purpose, such as carving or decorating."}
+
+OUTPUT: (0, "There is enough information to choose the answer, since we have info that person is cutting a orange pumpkin and 'cutting a pumpkin' is one of the choices. There are no other choices that are similar, since there is no mention of meat, cake, or watermelon. Even though the description mentions scissors instead of a knife, we take into account the possibility of noise in our descriptions, and scissors and knife look close enough in appearance, allowing us to make a reasonable guess that 0 is the answer.)
+
+# Example 2
+QUESTION: 'why does the thumb move upwards when the animal is moving close to it?'
+CHOICES: "['feed dog', 'prevent from falling', 'hand gesture while talking', 'feel happy', 'draw attention']"
+INFO: {'Time 10.4s/13.8s': "The image features a person holding a small, fluffy, gray animal, possibly a kitten or a rabbit, in their hands. The animal is resting comfortably in the person's palm, with its head tucked under their fingers. The person is holding the animal close to their body, providing a sense of warmth and care. The scene captures a tender moment between the person and the small creature.", 'Time 7s/13.8s': "Q - Is the person's thumb moving upwards when the animal is close, and if so, what is the person doing with their thumb? A - "Yes, the person's thumb is moving upwards when the animal is close. The person is holding the small kitten in their hand, and their thumb is positioned under the kitten's chin, providing support and comfort. This suggests that the person is gently holding the kitten and ensuring its safety and well-being."}
+
+OUTPUT: (1, 'There is enough information since from the first description and the question answer pair it is reasonably assumed that the animal is in the person's hand and is small. There is no mention of feeding, and it is unlikely that the person is gesturing while talking with an animal in their hand. While the last two answers are plausible, the most likely answer is that the person is preventing the creature from falling since it is in the person's palm.")
+
+# Example 3
+QUESTION: 'why is the baby hiding behind the vacuum cleaner in the beginning?'
+CHOICES: "['playing with man', 'he was stuck at the sofa', 'want to push vacuum cleaner forward', 'for baby to clean floor', 'teaching the kid']"
+INFO: {'Time 14.3s/15.5s': "The image features a young child sitting in a high chair, wearing a white shirt. The child appears to be looking at something in front of them, possibly a toy or an object of interest. The high chair is placed in a dining area, with a dining table nearby.\n\nThe room also contains several chairs, with one chair positioned close to the child and two others placed further away. There is a handbag placed on the floor, and a cup can be seen on the dining table. The scene gives off a cozy and comfortable atmosphere, likely in a home setting.", 'Time 3s/15.5s': "Q - Is there a baby behind the vaccuum, and if so, why is the baby behind the vaccuum? A - Yes, there is a baby behind the vacuum cleaner. The baby is playing with the vacuum cleaner, likely enjoying the experience of being close to the machine and possibly imitating the actions of an adult using the vacuum."}
+
+OUTPUT: (None, 'There is not enough information to answer the question. None of the answers seem immediately obvious and we can't immediately rule out most answers using the information we have either. We will need to know more things such as if there is a man, sofa, or if the baby is moving the vacuum, etc.")
+
+Now, return your answer after OUTPUT. Remember return your answer as a tuple with "True" or "False" as the first element. Do not use any words other than "True" or "False" in the first element of your response. 
+
+#
+QUESTION: INSERT_QUESTION_HERE
+CHOICES: INSERT_CHOICES_HERE
+INFO: INSERT_INFO_HERE
+
+OUTPUT:

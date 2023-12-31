@@ -28,14 +28,14 @@ llava:
 answerer:
     siglip_prompt: /home/shang/vidVQA/prompts/siglip_prompt.txt
 planner:
-    planner_prompt: /home/shang/vidVQA/prompts/planner_prompt.txt
+    planner_prompt: /home/shang/vidVQA/prompts/with_explanation/planner_prompt.txt
 retriever:
-    retriever_prompt: /home/shang/vidVQA/prompts/retriever_prompt.txt
+    retriever_prompt: /home/shang/vidVQA/prompts/with_explanation/retriever_prompt.txt
 extractor:
     extractor_prompt: null
 evaluator:
-    evaluator_prompt: /home/shang/vidVQA/prompts/evaluator_prompt.txt
-    final_select: /home/shang/vidVQA/prompts/final_select_prompt.txt
+    evaluator_prompt: /home/shang/vidVQA/prompts/with_explanation/evaluator_prompt.txt
+    final_select: /home/shang/vidVQA/prompts/final_select_prompt.txt`
 
 # Saving and loading parameters
 save: True                                          # Save the results to a file
