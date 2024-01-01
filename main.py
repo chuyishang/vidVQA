@@ -7,7 +7,7 @@ dataset = MyDataset(data_path="/shared/shang/datasets/nextqa/videos/",
                     query_file="/shared/shang/datasets/nextqa/metadata/queries_2k.csv",
                     max_samples=100)
 
-item = dataset[1]
+item = dataset[2]
 print(item["query"], item['possible_answers'])
 print(item["answer"])
 video = VideoObj(item["video"], item["query"], item["possible_answers"])
