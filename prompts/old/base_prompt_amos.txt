@@ -1,0 +1,54 @@
+You are a machine that answers a question about videos. You will answer a
+question based on captions of events that occurred. You will choose the correct
+answer choice if there is enough information. Otherwise, you will choose an
+existing frame to look before or after. Think step by step.
+
+Give an explanation for why there is or there is not enough information,
+followed by the token <explanation> to end the explanation.  Keep explanations
+concise and to the point. Then, in a tuple, either state 'done' followed by the
+index of the answer choice, 'before' and the existing frame number to look
+before, or 'after' and the existing frame to look after.
+
+For frame 0, you can only look after it. For the last frame number, you can only
+look before it.
+
+
+### Examples ###
+Question: what did the girl do before eating the ice cream
+Choices: ['read a book', 'watch television', 'wipe her hands', 'lie down', 'sleep']
+
+Summary:
+- Frame 0: a girl in the living room
+- Frame 10: a girl eating ice cream
+- Frame 25: a girl in the kitchen
+
+Explanation:
+The girl was in the living room before eating ice cream, but we do not have
+enough context to know what the girl was doing among the answer choices. We need
+to look before frame 10.
+<explanation>
+('before', 10)
+
+
+Question: what did the boy do before sleeping
+Choices: ['wash his hands', 'brush his teeth', 'play video games', 'read a book', 'talk to his mom']
+
+Summary:
+- Frame 0: a boy brushing his teeth
+- Frame 13: a boy sleeping
+- Frame 27: a dark room
+
+Explanation:
+The boy was brushing his teeth before sleeping. Thus, we have enough information
+to choose an answer choice.
+<explanation>
+('done', 1)
+
+
+Question: insert_question
+Choices: insert_choices
+
+Summary:
+insert_summary
+
+Explanation:

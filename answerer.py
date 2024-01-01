@@ -164,8 +164,9 @@ class Evaluator(Answerer):
     def parse_output(self, answer: tuple[int, str]) -> int:
         try:
             output = ast.literal_eval(answer)
-            final_choice = output[0]
-            logging.info(f"Explanation: {output[1]}")
+            # final_choice = output[0]
+            final_choice = output["Answer"]
+            logging.info(f"Explanation: {output['Explanation']}")
             return final_choice
         except Exception as e:
             print(e)
@@ -188,7 +189,8 @@ class Planner():
         output = self.answerer.llm.forward(prompt)
         output = ast.literal_eval(output)
         # modification for explanation
-        return output[0], output[1]
+        # return output[0], output[1]
+        return output["Plan"], output["Explanation"]
         
     def clean_output(self, output: list[str]) -> list[str]:
         pass
