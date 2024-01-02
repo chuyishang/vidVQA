@@ -98,8 +98,12 @@ class Answerer():
             logging.info(f'NEW TIME: {new_tstmp}, NEW FRAME: {frame}, NEW QUESTIONS: {questions}, EXPLANATION: {explanation}')
             # Extractor
             key, ans = self.extractor.forward(frame[1], questions, new_tstmp)
-            self.video.info[key] = ans
-            logging.info(f"KEY: {key}, ANSWER: {ans}")
+            # In case we choose the same frame
+            if key in self.video.info:
+                self.video.info[key].append(ans)[1:]
+            else:
+                self.video.info[key] = ans
+            logging.info(f"INFO: {self.video.info}")
             # Evaluator
             final_choice = self.evaluator.forward(self.video.question, self.video.choices, self.video)
             logging.info(f"FINAL CHOICE: {final_choice}")
@@ -154,24 +158,25 @@ class Evaluator(Answerer):
         output = self.answerer.llm.forward(prompt)
         return output
 
-    def final_select(self, question: str, choices: list, video_info: dict) -> (int, str):
+    def final_select(self, question: str, choices: list, video_info: dict):
         prompt_path = config["evaluator"]["final_select"]
         prompt =  self.answerer.construct_prompt(question, choices, video_info, prompt_path)
         output = self.answerer.llm.forward(prompt)
-        return int(output)
+        return output
 
-    
     def parse_output(self, answer: tuple[int, str]) -> int:
         try:
             output = ast.literal_eval(answer)
             # final_choice = output[0]
             final_choice = output["Answer"]
             logging.info(f"Explanation: {output['Explanation']}")
+            if final_choice not in [None, "None"]:
+                final_choice = int(final_choice)
             return final_choice
         except Exception as e:
             print(e)
     
-    def forward(self, question: str, choices: list, video: VideoObj, final_choice: bool = False) -> int:
+    def forward(self, question: str, choices: list, video: VideoObj, final_choice: bool = False):
         if not final_choice:
             output = self.evaluate_info(question, choices, video)
         else:
@@ -182,12 +187,14 @@ class Evaluator(Answerer):
 class Planner():
     def __init__(self, answerer):
         self.answerer = answerer
+        self.plan = None
 
     def create_plan(self, video: VideoObj):
         prompt_path = config["planner"]["planner_prompt"]
-        prompt = self.answerer.construct_prompt(video.question, video.choices, video.info, prompt_path)
+        prompt = self.answerer.construct_prompt(video.question, video.choices, video.info, prompt_path).replace("INSERT_PAST_PLAN_HERE", str(self.plan))
         output = self.answerer.llm.forward(prompt)
         output = ast.literal_eval(output)
+        self.plan = output["Plan"]
         # modification for explanation
         # return output[0], output[1]
         return output["Plan"], output["Explanation"]
@@ -205,11 +212,12 @@ class Planner():
 class Retriever():
     def __init__(self, answerer):
         self.answerer = answerer
+        self.curr = None
 
     # TODO: modify prompt to accept multiple question asking
     def select_frame(self, video: VideoObj, plan: list[str]) -> dict[str, str]:
         prompt_path = config["retriever"]["retriever_prompt"]
-        prompt = self.answerer.construct_prompt(video.question, video.choices, video.info, prompt_path).replace("INSERT_PLAN_HERE", plan)
+        prompt = self.answerer.construct_prompt(video.question, video.choices, video.info, prompt_path).replace("INSERT_PLAN_HERE", plan).replace("INSERT_CURR_HERE", str(self.curr))
         output = self.answerer.llm.forward(prompt)
         return output
     
@@ -221,6 +229,8 @@ class Retriever():
             questions = output["Questions"]
             explanation = output["Explanation"]
             frame = self.answerer.video.get_frame_from_second(goto)
+            curr_text = f"Time {goto}/{self.answerer.video.length_secs}"
+            self.curr = curr_text
             return goto, frame, questions, explanation
         except Exception as e:
             print(e)
@@ -229,58 +239,3 @@ class Retriever():
         output = self.select_frame(video, plan)
         goto, frame, questions, explanation = self.parse_answer(output)
         return goto, frame, questions, explanation
-        
-
-
-
-
-
-"""
-class frame_selector():
-    def __init__(self):
-
-    def get_answer(self, images, question, answer_choices, curr_frame, total_frames, caption, prev_info=None):
-        LIMIT = 10
-        goto_frame = curr_frame
-        VQA_question = None
-        info = {}
-        caption = caption
-        while LIMIT >= 0:
-            print("LIMIT: ", LIMIT)
-            LIMIT -= 1
-            if goto_frame == curr_frame:
-                # ask a random question.
-                question = question
-                image = self.vis_processors["eval"](images[curr_frame]).unsqueeze(0).to(modules.device2)
-                question = self.txt_processors["eval"](question)
-                answer = self.model.predict_answers(samples={"image": image, "text_input": question}, inference_method="generate")
-                print("VQA ANSWER: ", answer)
-                if answer in answer_choices:
-                    return answer
-                else:
-                    VQA_question = question
-                    goto_frame = total_frames - 1
-            else:
-                # ask a question about the frame
-                question = VQA_question
-                image = self.vis_processors["eval"](images[goto_frame]).unsqueeze(0).to(modules.device2)
-                question = self.txt_processors["eval"](question)
-                answer = self.model.predict_answers(samples={"image": image, "text_input": question}, inference_method="generate")
-                print("VQA ANSWER: ", answer)
-                if answer in answer_choices:
-                    return answer
-                else:
-                    goto_frame -= 1
-            if goto_frame == curr_frame:
-                # ask a random question.
-                image = self.vis_processors2["eval"](images[curr_frame]).unsqueeze(0).to(modules.device2)
-                caption = self.model2.generate({"image": image})
-                caption = caption[0]
-                print("CAPTION: ", caption)
-                if caption in answer_choices:
-                    return caption
-                else:
-                    goto_frame = total_frames - 1
-            else:
-                # ask a question about the frame
-"""

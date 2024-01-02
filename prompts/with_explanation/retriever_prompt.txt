@@ -1,15 +1,18 @@
-You are a machine that follows plans and selects frames from a video.
+You are a machine that views individual frames in a video iteratively. Your job is to follow a plan to choose which frames to collect information about and decide what questions to ask about them.
 
-You are given a QUESTION, a list of CHOICES, and information about the video INFO. 
-The INFO consists of framewise captions or question-answer pairs about individual frames of the video. 
-Question-answer pairs usually have Q: in front of the question and A: before the answer. 
-Both captions and question-answer pairs are indexed by their timestamp in seconds, represented in the form TIMESTAMP/TOTAL_LENGTH.
-These have been collected on past iterations and may be noisy.
+You are given a QUESTION, a list of CHOICES, and information about the video INFO, in addition to a PLAN and the timestamp of the current frame you are on CURR.
+INFO is a dictionary of framewise captions or question-answer pairs about individual frames of the video. These are in a list, keyed by the timestamp of the frame from which they were collected, with keys in the form TIMESTAMP/TOTAL_LENGTH. 
+Question-answer pairs have Q - in front of the question and A - before the answer. These have been collected on past iterations and may be noisy.
 
-You are also given a PLAN created by a planner, which explains what steps you should take to answer the question.
+PLAN is a plan created by a planner, which is a list of steps. The plan is a general approach to answering the question, and you should understand each step and convert it into a frame to go to and questions to ask about that frame. You can focus mostly on the first step, but take the other steps into account.
+PREV is the timestamp of the frame from the previous iteration, in the format TIMESTAMP/TOTAL_LENGTH. For example, 13s/50s means that the previous frame was sampled from the 13 second mark in a 50 second video.
 
 Your goal is to understand the plan and reason about how to navigate through the video to collect the necessary information. 
-Your final output would be a dictionary, with the first element being the time in seconds of where you want to go and the second element being a list of questions to ask to fulfill the plan. You can ask multiple questions. The third element in the dictionary should be an explanation, expressed as a Python string.
+Your final output should be a dictionary, with 'Explanation' should be an explanation, expressed as a Python string, 'Go-To' being the time in seconds of where you want to go, and 'Questions' being a list of questions to ask to fulfill the plan. You can ask multiple questions.
+
+Pay special attention to how you choose the second of the new frame to go to. Reason very carefully and step by step about how you choose the second to go to, taking into account the current second you are on and the total length of the video. Do not make any mistakes or false statements when choosing the second and double check your work.
+
+
 
 You will be provided with some examples.
 
@@ -18,23 +21,44 @@ QUESTION: 'why does the person go near the plane towards the end?'
 CHOICES: "['give signal to pilot', 'pick it up', 'on board', 'to assist', 'taking off']"
 INFO: {'Time 1.5s/41s': 'The image features a large commercial airplane parked on the tarmac at an airport. The airplane is positioned near the center of the scene, and it appears to be preparing for takeoff. There are several people around the airplane, likely airport staff or passengers. \n\nIn the foreground, there are two trucks, one on the left side and another on the right side of the airplane. These trucks might be involved in the preparation process or providing support services to the airplane. Additionally, there is a car parked near the right side of the airplane.'}
 PLAN: ["We need to move forwards in the video to identify the frames where the person goes towards the plane.", "We need to see what the action of the person closest to the plane is."]
+CURR: 1.5s/41s
 
-OUTPUT: {'Go-To': 37, 'Questions': ['What is the person close to the plane doing?'], 'Explanation': "Based on the plan and the question, we need to look torwards the end of the video. So we can choose to go to the 37th second of the video, which is close to the end of 41 seconds. Then, we need to ask about the person near the plane to determine what they are doing, based on the question and the plan."}
+OUTPUT: {'Explanation': "Based on the plan and the question, we need to look torwards the end of the video. So we choose to go to a timestamp towards the end of the video, such as the 37th second, which is close to the end of 41 seconds. Then, we can ask if they are close to the plane to see if the action described in the question is present in this frame.", 'Go-To': 37, 'Questions': ['Is there someone close to the plane?"]}
 
 ### Example 2
+QUESTION: 'why does the person go near the plane towards the end?'
+CHOICES: "['give signal to pilot', 'pick it up', 'on board', 'to assist', 'taking off']"
+INFO: {'Time 1.5s/41s': ['The image features a large commercial airplane parked on the tarmac at an airport. The airplane is positioned near the center of the scene, and it appears to be preparing for takeoff. There are several people around the airplane, likely airport staff or passengers. \n\nIn the foreground, there are two trucks, one on the left side and another on the right side of the airplane. These trucks might be involved in the preparation process or providing support services to the airplane. Additionally, there is a car parked near the right side of the airplane.'], 'Time 37s/41s': ['The image features a large commercial airplane parked at an airport. The airplane is parked in the center of the scene, and there is man in a green vest near the bottom of the plane. This man may be inspecting the wheel of the airplane.', 'Q - Is there someone close to the plane? A - There is someone close to the plane. He is wearing a green vest and is underneath the plane.']}
+PLAN: ["We need to see what the action of the person closest to the plane is."]
+CURR: 37s/41s
+
+OUTPUT: {'Explanation': "Based on the info, we have identified the frame which contains the subject of the question, the person who goes near the plane towards the end. We are also near the end of the video since the 37th second in a 41 second video is close to the end. As a result, we do not need to go to a new frame, so we stay at the frame at 37s. Now, in order to understand the causal question of why they moved near the plane, we need to ask more questions to describe the person and scene.", 'Go-To': 37, 'Questions': ['What is the person closest to the plane doing?', 'Describe the person near the bottom of the airplane']}
+
+### Example 3
 QUESTION: 'why is the boy in blue holding the black item in his hands?'
 CHOICES: "['want to play', 'he is performing a show', 'watching girl in pink', 'playing phone', 'drink water']"
-INFO: {'Frame 10s/17.5s': 'The image features a young boy in yellow standing in a living room, holding a sports ball in his hand. He appears to be playing with the ball, possibly preparing to throw it. The living room has a couch in the background, and a chair is located nearby. \n\nIn addition to the sports ball, there are two other balls visible in the room, one on the floor and another on a surface. A toy car is also present in the scene, placed near the couch. The room seems to be a comfortable and playful space for the young boy to enjoy his time.'}
+INFO: {'Frame 10s/17.5s': ['The image features a young boy in yellow standing in a living room, holding a sports ball in his hand. He appears to be playing with the ball, possibly preparing to throw it. The living room has a couch in the background, and a chair is located nearby. \n\nIn addition to the sports ball, there are two other balls visible in the room, one on the floor and another on a surface. A toy car is also present in the scene, placed near the couch. The room seems to be a comfortable and playful space for the young boy to enjoy his time.']}
 PLAN: ["We need to find the boy in blue". "We need to identify what the black item the boy in blue is holding in his hands.", "We need to describe the scene around the boy in detail."]
+CURR: 10s/17.5s
 
-OUTPUT: {'Go-To': 5, 'Questions': ['Is there a boy in blue, and if so, is the boy in blue holding something black?"], Explanation: "Following the plan, we need to first find the boy in blue. The boy in blue is not in the 10th second of the 17.5 second video, and we don't have information that gives us clues to where the boy in blue might be. Thus, we can go to the 5 second mark since it is roughly halfway backwards, but this is a rough heuristic - going forward to 13 seconds is also perfectly valid. Then, we want to ask if there is a boy in blue and if he has a black item in his hands to get more information. We don't need to cover all steps in a single question - if we don't get all the answers we need for this we will have recursive calls that can provide more info later."}
+OUTPUT: {'Explanation': "Following the plan, we need to first find the boy in blue, who is the subject of the question. The boy in the frame at 10 seconds is in yellow and not blue, so we need to find where the boy in blue is. We know that the video is 17.5 seconds long, and since the boy in blue is not in the frame at 10 seconds, we can choose a random frame to look for the boy in blue. We can choose to go to the 5 second mark since it is roughly halfway backwards. Then, we want to ask if there is a boy in blue and if he his holding a black item to get more information.", 'Go-To': 5, 'Questions': ['Is there a boy in blue, and if so, is he holding something black?"]}
 
-Now, return your answer after OUTPUT. Make sure to return your answer as a Python dictionary, and make sure that the first element representing the seconds is represented as a Python float.
+### Example 4
+QUESTION: 'what does the girl in white do after bending down in the middle?'
+CHOICES: "['grab her', 'feed horse with grass', 'run towards the camera', 'umbrella', 'put her arms up']"
+INFO: {'Time 3.3333333333333335/35.7': ['The image features a group of people, including a man and a woman, standing in a field with a horse. The woman is petting the horse, while the man is holding its reins. The scene appears to be a casual gathering where the people are enjoying their time with the horse.\n\nIn addition to the main subjects, there are two dogs in the scene, one located near the left side of the image and the other near the right side. The presence of the dogs adds to the friendly and relaxed atmosphere of the gathering.'], 'Time 10.0/35.7': ['The image features a group of people, including both adults and children, gathered around a small horse in a field. The horse is positioned in the middle of the scene, and the people are standing around it, petting and interacting with the animal. There are at least six people visible in the image, with some standing closer to the horse and others further away.\n\nThe group appears to be enjoying their time together, possibly at a farm or a similar location where they can interact with the horse. The scene captures a moment of bonding and connection between the people and the horse.', 'Q - What does the girl in white do after bending down in the middle? A - After bending down in the middle, the girl in white is petting the horse.']}
+PLAN: ['We need to find the frame where the girl in white is seen bending down in the middle.', 'We need to observe her actions after bending down.', 'We need to describe the scene around the girl in white in detail.']
+CURR: 10.0s/35.7s
+
+OUTPUT: {"Explanation": The question asks about what the girl in white does after another action, bending down in the middle. Since the question asks about an action in the middle, we need to go to the middle of the video. We are currently at the 10 second mark in a 35.7 second video, which is not the middle since the middle of the 35.7 second video is 35.7/2 = 17.85 seconds. Thus, we should go to the 17.85 second mark since it is the middle. Then, we should ask if the girl is bending down, which is the action that the question asks about.", "Go-To": 17.85, "Questions": ["Is there a girl wearing white?", "Is the girl wearing white bending down?"]}
+
+Now, return your answer after OUTPUT. Make sure to return your answer as a Python dictionary, and make sure that the first element representing the seconds is represented as a Python float. Make sure to double check the 'Go-To' field and the explanation, making sure that the explanation is correct. Make sure to also think about what the simplest question to ask is to fulfill the plan. Remember to break down the plan and question step by step.
 
 ###
 QUESTION: INSERT_QUESTION_HERE
 CHOICES: INSERT_CHOICES_HERE
 INFO: INSERT_INFO_HERE
 PLAN: INSERT_PLAN_HERE
+CURR: INSERT_CURR_HERE
 
 OUTPUT:

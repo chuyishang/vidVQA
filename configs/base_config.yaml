@@ -35,7 +35,7 @@ extractor:
     extractor_prompt: null
 evaluator:
     evaluator_prompt: /home/shang/vidVQA/prompts/with_explanation/evaluator_prompt.txt
-    final_select: /home/shang/vidVQA/prompts/final_select_prompt.txt
+    final_select: /home/shang/vidVQA/prompts/with_explanation/final_select_prompt.txt
 
 # Saving and loading parameters
 save: True                                          # Save the results to a file
