@@ -36,12 +36,12 @@ Answerer Process:
 # ========================== Base answerer model ========================== #
 class Answerer():
     """Main Answerer class. Contains all the modules and functions to run the Answerer."""
-    def __init__(self, caption_model: BaseModel, vqa_model: BaseModel, similarity_model: BaseModel, llm: BaseModel, video_obj: VideoObj, max_tries: int = 10):
+    def __init__(self, caption_model: BaseModel, vqa_model: BaseModel, similarity_model: BaseModel, llm: BaseModel, max_tries: int = 10):
         self.similarity_model = similarity_model
         self.caption_model = caption_model
         self.vqa_model = vqa_model
         self.llm = llm
-        self.video = video_obj
+        self.video = None
         self.max_tries = max_tries
 
         self.planner = Planner(self)
@@ -84,9 +84,16 @@ class Answerer():
         key, caption = self.extractor.forward(start_image, start_sec=start_sec)
         #init_key, init_info = self.construct_info(start_sec, end_sec, answer=caption)
         self.video.info[key] = caption
+    
+    def reset_history(self) -> None:
+        self.planner.plan = None
+        self.retriever.curr = None
 
     # TODO: Check if this is correct (do we want int or str?)
-    def forward(self) -> int:
+    def forward(self, video) -> int:
+        """Forward function for Answerer. Takes in a video and returns the final answer."""
+        self.video = video
+        self.reset_history()
         self.init_update()
         for i in range(self.max_tries):
             logging.info(f"TRY: {i}/{self.max_tries}")

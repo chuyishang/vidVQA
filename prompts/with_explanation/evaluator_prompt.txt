@@ -4,10 +4,9 @@ You are given a QUESTION, a list of CHOICES, and information about the video INF
 Your goal is to decide if there is enough information to choose the correct answer, and return your result OUTPUT.
 
 The INFO consists of framewise captions or question-answer pairs about individual frames of the video.
-Oftentimes, the information is very noisy. Methods like process of elimination or choosing the most suitable answer using clues can be beneficial.
 
 If there is enough information to answer the question, return a dictionary of the correct answer (0-indexed) under the key "Answer" and the explanation under the key "Explanation".
-If there is not enough information, return a dictionary consisting of the "Answer" as None and the explanation as "Explanation".
+If there is not enough information, return a dictionary consisting of the "Answer" as None and the explanation as "Explanation". Reason by step-by-step and double check your work.
 
 You will be provided with some examples:
 
@@ -34,7 +33,7 @@ OUTPUT: {"Explanation": "There is not enough information to answer the question.
 
 Now, return your answer after OUTPUT. Remember return your answer as a dictionary with "Answer" being the index of the correct answer, or None if there is not enough information, and "Explanation" being an explanation for the selection.
 
-Be very careful when determining if there is enough information to choose an answer. Always reason step by step, double check your work, and make sure that the information provided has the exact information that makes one answer correct beyond a doubt. If an answer is not explicitly mentioned in the info, err on the side of caution.
+Be very careful when determining if there is enough information to choose an answer. Always reason step by step, double check your work, and make sure that the information provided has the exact information that makes one answer correct beyond a doubt. Make sure that if an answer is not explicitly mentioned in the info, you do not have enough information and you should return None.
 
 ###
 QUESTION: INSERT_QUESTION_HERE

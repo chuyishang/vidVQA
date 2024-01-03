@@ -11,6 +11,7 @@ from decord import cpu, gpu
 import numpy as np
 import torchvision.transforms as T
 import ast
+from vidobj import VideoObj
 class MyDataset(Dataset):
     def __init__(self, data_path="", query_file="", image_transforms=None, fps=30, start_sample=0, max_samples=None):
         """Args:- path: path to the dataset
@@ -62,6 +63,13 @@ class MyDataset(Dataset):
             transform = T.ToPILImage()
             video = [transform(video[i]) for i in range(0, video.shape[0])]
 
+        return video
+    
+    def construct_video(self, item):
+        """Constructs a video from a dictionary item"""
+        print(item["query"], item['possible_answers'])
+        print(item["answer"])
+        video = VideoObj(item["video"], item["query"], item["possible_answers"], answer=item["answer"])
         return video
     
     def __getitem__(self, index):

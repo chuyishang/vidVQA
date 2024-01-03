@@ -469,32 +469,3 @@ class LLAVA(BaseModel):
             outputs = outputs[: -len(stop_str)]
         outputs = outputs.strip()
         return outputs
-
-
-
-
-
-
-        """
-        model_path = "/home/shang/vidVQA/models/LLaVA/llava-v1.5-7b"
-        prompt = "What are the things I should be cautious about when I visit here?"
-        image_file = image
-
-        args = type('Args', (), {
-            "model_path": model_path,
-            "model_base": None,
-            "model_name": run_llava.get_model_name_from_path(model_path),
-            "query": prompt,
-            "conv_mode": None,
-            "image_file": image_file,
-            "sep": ",",
-            "temperature": 0,
-            "top_p": None,
-            "num_beams": 1,
-            "max_new_tokens": 512
-        })()
-
-        result = run_llava.eval_model(args)
-        return result
-    """
-    
