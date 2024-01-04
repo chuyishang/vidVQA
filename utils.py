@@ -13,8 +13,8 @@ import openai
 
 with open('api.key') as f:
     openai.api_key = f.read().strip()
-with open('api_org.key') as f:
-    openai.organization = f.read().strip()
+# with open('api_org.key') as f:
+#     openai.organization = f.read().strip()
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
