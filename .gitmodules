@@ -7,3 +7,6 @@
 [submodule "models/pytorch-image-models"]
 	path = models/pytorch-image-models
 	url = https://github.com/rwightman/pytorch-image-models
+[submodule "models/LLaVA"]
+	path = models/LLaVA
+	url = git@github.com:haotian-liu/LLaVA.git
