@@ -67,8 +67,8 @@ class MyDataset(Dataset):
     
     def construct_video(self, item):
         """Constructs a video from a dictionary item"""
-        print(item["query"], item['possible_answers'])
-        print(item["answer"])
+        #print(item["query"], item['possible_answers'])
+        #print(item["answer"])
         video = VideoObj(item["video"], item["query"], item["possible_answers"], answer=item["answer"])
         return video
     

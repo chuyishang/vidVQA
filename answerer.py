@@ -5,8 +5,8 @@ from vidobj import VideoObj
 from config import settings as config
 import logging
 import PIL
+logging.basicConfig(filename=config["logger"], encoding='utf-8', level=logging.INFO)
 
-logging.basicConfig(filename='debugging.log', encoding='utf-8', level=logging.INFO)
 """
 Answerer design:
 
@@ -35,8 +35,9 @@ Answerer Process:
 """
 # ========================== Base answerer model ========================== #
 class Answerer():
+    
     """Main Answerer class. Contains all the modules and functions to run the Answerer."""
-    def __init__(self, caption_model: BaseModel, vqa_model: BaseModel, similarity_model: BaseModel, llm: BaseModel, max_tries: int = 10):
+    def __init__(self, caption_model: BaseModel, vqa_model: BaseModel, similarity_model: BaseModel, llm: BaseModel, max_tries: int = 6):
         self.similarity_model = similarity_model
         self.caption_model = caption_model
         self.vqa_model = vqa_model
@@ -82,6 +83,7 @@ class Answerer():
         start_frame, start_image = self.get_keyframe(self.video.images, self.video.question)
         start_sec, end_sec = self.video.get_second_from_frame(start_frame), self.video.get_second_from_frame(len(self.video))
         key, caption = self.extractor.forward(start_image, start_sec=start_sec)
+        self.retriever.curr = key
         #init_key, init_info = self.construct_info(start_sec, end_sec, answer=caption)
         self.video.info[key] = caption
     
@@ -104,12 +106,12 @@ class Answerer():
             new_tstmp, frame, questions, explanation = self.retriever.forward(self.video, plan)
             logging.info(f'NEW TIME: {new_tstmp}, NEW FRAME: {frame}, NEW QUESTIONS: {questions}, EXPLANATION: {explanation}')
             # Extractor
-            key, ans = self.extractor.forward(frame[1], questions, new_tstmp)
+            key, answer = self.extractor.forward(frame[1], questions, new_tstmp)
             # In case we choose the same frame
             if key in self.video.info:
-                self.video.info[key].append(ans)[1:]
+                self.video.info[key].extend(answer[1:])
             else:
-                self.video.info[key] = ans
+                self.video.info[key] = answer
             logging.info(f"INFO: {self.video.info}")
             # Evaluator
             final_choice = self.evaluator.forward(self.video.question, self.video.choices, self.video)

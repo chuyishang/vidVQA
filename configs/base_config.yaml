@@ -14,7 +14,7 @@ gpt:                                                # GPT-3 configuration
     qa_prompt: ./prompts/base_prompt.txt
     final_select_prompt: ./prompts/final_prompt.txt
     temperature: 0                                  # Temperature for GPT-3. Almost deterministic if 0
-    model: gpt-3.5-turbo                            # See openai.Model.list() for available models
+    model: gpt-3.5-turbo-1106                        # See openai.Model.list() for available models
 
 llava:
     model_path: /home/shang/vidVQA/models/LLaVA/llava-v1.5-7b
@@ -51,5 +51,4 @@ wandb: False                                        # Use Weights and Biases
 blip_half_precision: True                           # Use 8bit (Faster but slightly less accurate) for BLIP if True
 blip_v2_model_type: blip2-flan-t5-xxl               # Which model to use for BLIP-2
 
-use_fixed_code: False                               # Use a fixed code for all samples (do not generate with Codex)
-fixed_code_file: ./prompts/fixed_code/blip2.prompt  # Path to the fixed code file
+logger: /home/shang/vidVQA/logger/debugging_run1.log

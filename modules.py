@@ -248,7 +248,7 @@ class GPTModel(BaseModel):
         self.model = config["gpt"]["model"]
         self.max_tries = max_tries
 
-    def call_llm(self, prompt, model="gpt-3.5-turbo", 
+    def call_llm(self, prompt, model, 
                  frequency_penalty=0, presence_penalty=0, 
                  max_tokens=1000, n=1, temperature=1):
         for _ in range(self.max_tries):
@@ -286,7 +286,7 @@ class GPTModel(BaseModel):
         prompt = prompt.replace('insert_caption', caption[0])
 
         #print(prompt)
-        output = self.call_llm(prompt)
+        output = self.call_llm(prompt, model=self.model)
         try:
             output_dict = ast.literal_eval(output)
             print("GETTING OUTPUT: ", output_dict)
@@ -301,7 +301,7 @@ class GPTModel(BaseModel):
         prompt = prompt.replace('insert_choices', str(choices))
         prompt = prompt.replace('insert_info', str(info))
         #print(prompt)
-        output = self.call_llm(prompt)
+        output = self.call_llm(prompt, model=self.model)
         try:
             output_dict = ast.literal_eval(output)
             print("GETTING FINAL OUTPUT: ", output_dict)
@@ -333,7 +333,7 @@ class GPTModel(BaseModel):
 
     def get_general(self, prompt):
         """Gets the general response from GPT-3."""
-        response = self.call_llm(prompt)
+        response = self.call_llm(prompt, model = self.model)
         return response
 
     # TODO: implement generic forward functionality with case handling

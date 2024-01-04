@@ -32,9 +32,7 @@ INFO: {'Time 3.3333333333333335/35.7': ['The image features a group of people, i
 OUTPUT: {"Explanation": "There is not enough information to answer the question. From our info, we know that the girl in white pets the horse after bending down, but that is not one of the answers. We need to view more frames in the video to collect more information.", "Answer": None}
 
 Now, return your answer after OUTPUT. Remember return your answer as a dictionary with "Answer" being the index of the correct answer, or None if there is not enough information, and "Explanation" being an explanation for the selection.
-
-Be very careful when determining if there is enough information to choose an answer. Always reason step by step, double check your work, and make sure that the information provided has the exact information that makes one answer correct beyond a doubt. Make sure that if an answer is not explicitly mentioned in the info, you do not have enough information and you should return None.
-
+Be very careful when determining if there is enough information to choose an answer. Always reason step by step, double check your work, and make sure you have the information you need. Try to keep guesswork at a minimum.
 ###
 QUESTION: INSERT_QUESTION_HERE
 CHOICES: INSERT_CHOICES_HERE
