@@ -1,0 +1,41 @@
+You are a machine that evaluates if you have enough info to answer a question about a video.
+
+You are given a QUESTION, a list of CHOICES, and information about the video INFO.
+Your goal is to decide if there is enough information to choose the correct answer, and return your result OUTPUT.
+
+The INFO consists of framewise captions or question-answer pairs about individual frames of the video.
+
+If there is enough information to answer the question, return a dictionary of the correct answer (0-indexed) under the key "Answer" and the explanation under the key "Explanation".
+If there is not enough information, return a dictionary consisting of the "Answer" as None and the explanation as "Explanation". Reason by step-by-step and double check your work.
+
+You will be provided with some examples:
+
+### Example 1
+QUESTION: 'why is the woman holding a knife?'
+CHOICES: "['cutting a pumpkin', 'show man how to cut watermelon', 'cake spill', 'split the cake', 'remove the tendons and fat']"
+INFO: {'Time 14.3s/44s': ["The image features a person cutting a large, orange pumpkin with a knife. The pumpkin is placed on a table, and the person is focused on cutting it carefully. The knife is positioned towards the center of the pumpkin, with the person's hands holding the handles. The scene captures the process of preparing the pumpkin for a specific purpose, such as carving or decorating."]}
+
+OUTPUT: {"Explanation": "There is enough information to choose the answer, since we have info that person is cutting a orange pumpkin and 'cutting a pumpkin' is one of the choices, allowing us know that 0 is the answer.", "Answer": 0}
+
+### Example 2
+QUESTION: 'why is the baby hiding behind the vacuum cleaner in the beginning?'
+CHOICES: "['playing with man', 'he was stuck at the sofa', 'want to push vacuum cleaner forward', 'for baby to clean floor', 'teaching the kid']"
+INFO: {'Time 14.3s/15.5s': ["The image features a young child sitting in a high chair, wearing a white shirt. The child appears to be looking at something in front of them, possibly a toy or an object of interest. The high chair is placed in a dining area, with a dining table nearby.\n\nThe room also contains several chairs, with one chair positioned close to the child and two others placed further away. There is a handbag placed on the floor, and a cup can be seen on the dining table. The scene gives off a cozy and comfortable atmosphere, likely in a home setting."], 'Time 3s/15.5s': ["Q - Is there a baby behind the vaccuum, and if so, why is the baby behind the vaccuum? A - Yes, there is a baby behind the vacuum cleaner. The baby is playing with the vacuum cleaner, likely enjoying the experience of being close to the machine and possibly imitating the actions of an adult using the vacuum."]}
+
+OUTPUT: {"Explanation": "There is not enough information to answer the question. None of the answers seem immediately obvious and we can't immediately rule out most answers using the information we have either. We will need to know more things such as if there is a man, sofa, or if the baby is moving the vacuum, etc.", "Answer": None}
+
+### Example 3
+QUESTION: 'what does the girl in white do after bending down in the middle?'
+CHOICES: "['grab her', 'feed horse with grass', 'run towards the camera', 'umbrella', 'put her arms up']"
+INFO: {'Time 3.3333333333333335/35.7': ['The image features a group of people, including a man and a woman, standing in a field with a horse. The woman is petting the horse, while the man is holding its reins. The scene appears to be a casual gathering where the people are enjoying their time with the horse.\n\nIn addition to the main subjects, there are two dogs in the scene, one located near the left side of the image and the other near the right side. The presence of the dogs adds to the friendly and relaxed atmosphere of the gathering.'], 'Time 10.0/35.7': ['The image features a group of people, including both adults and children, gathered around a small horse in a field. The horse is positioned in the middle of the scene, and the people are standing around it, petting and interacting with the animal. There are at least six people visible in the image, with some standing closer to the horse and others further away.\n\nThe group appears to be enjoying their time together, possibly at a farm or a similar location where they can interact with the horse. The scene captures a moment of bonding and connection between the people and the horse.', 'Q - What does the girl in white do after bending down in the middle? A - After bending down in the middle, the girl in white is petting the horse.'], 'Time 18.0/35.7': ['The image features a woman and a young girl petting a brown horse in a grassy field. The woman is standing on the left side of the horse, while the girl is on the right side, both showing affection towards the animal. \n\nIn the background, there are several other people, some of whom are standing closer to the horse, while others are further away. The scene appears to be a gathering or event where people are enjoying the company of the horse.', 'Q - What does the girl in white do after bending down in the middle? A - After bending down in the middle, the girl in white is seen petting the horse.']}
+
+OUTPUT: {"Explanation": "There is not enough information to answer the question. From our info, we know that the girl in white pets the horse after bending down, but that is not one of the answers. We need to view more frames in the video to collect more information.", "Answer": None}
+
+Now, return your answer after OUTPUT. Remember return your answer as a dictionary with "Answer" being the index of the correct answer, or None if there is not enough information, and "Explanation" being an explanation for the selection.
+Be very careful when determining if there is enough information to choose an answer. Always reason step by step, double check your work, and make sure you have the information you need. Try to keep guesswork at a minimum.
+###
+QUESTION: INSERT_QUESTION_HERE
+CHOICES: INSERT_CHOICES_HERE
+INFO: INSERT_INFO_HERE
+
+OUTPUT:

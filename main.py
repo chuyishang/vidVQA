@@ -1,40 +1,60 @@
-import dataset
-import utils
-from tqdm import tqdm
+
+import modules
+import logging
+import answerer
 import argparse
+import csv
+from tqdm import tqdm
 
+from dataset import MyDataset
+from vidobj import VideoObj
 
-def get_siglip_query(question):
-    with open('./prompts/base_query.txt') as f:
-        prompt = f.read()
-        prompt = prompt.replace('insert_question', question)
-        output = utils.call_llm(prompt)
-    return output
+def main(args):
+    logging.basicConfig(filename=args.logging_file, level=logging.INFO)
+    dataset = MyDataset(data_path=args.data_path,
+                        query_file=args.query_file,
+                        start_sample=args.start_sample,
+                        max_samples=args.max_samples)
+
+    siglip = modules.SiglipModel(gpu_number=args.gpu1, siglip_model_type="ViT-B-16-SigLIP")
+    llava = modules.LLAVA(gpu_number=args.gpu2)
+    llm = modules.GPTModel()
+    ans = answerer.Answerer(llava, llava, siglip, llm)
+
+    batch_correct = 0
+    total_correct = 0
     
-
-def main():
-    print("here1")
-    data = dataset.get_data(args.query_file)
-    ids, choices, queries, answers, vid_names = data
-    for i in tqdm(range(len(ids))):
-        if i <= 2:
-            continue
-        video_id = vid_names[i].split(".")[0]
-        question = queries[i]
-        options = choices[i]
-        #video = utils.get_video(f'/shared/shang/datasets/nextqa/videos/{video_id}.mp4')
-        query = get_siglip_query(question)
-        print(video_id)
+    for i in tqdm(range(len(dataset))):
+        item = dataset[i]
+        video = dataset.construct_video(item)
         try:
-            output = utils.answer_question(video_id, question, options, query)
-            with open(f'./outputs/results_{args.query_file}', 'a') as f:
-                f.write(f'{ids[i]},{video_id},{question},"{options}",{output[0]},{answers[i]}\n')
-        except:
-            with open(f'./outputs/failures_{args.query_file}', 'a') as f:
-                f.write(f'{ids[i]},{video_id},{question},"{options}",{output[0]},{answers[i]}\n')
-        
+            pred = ans.forward(video)
+            with open(args.output_file, "a") as outfile:
+                outfile.write(f"{item['index']},{item['video_name']},{item['query_type']},{item['query']},{item['answer']},{item['possible_answers']},{pred}\n")
+            if pred == item["answer"]:
+                print("correct")
+                batch_correct += 1
+                total_correct += 1
+            if i+1 % args.print_interval == 0:
+                print("Batch accuracy: ", batch_correct / args.print_interval)
+                batch_correct = 0
+        except Exception as e:
+            print(e)
+            pass
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Arguments')
-    parser.add_argument('--query_file', type=str, default="queries.csv", help='Path to the data file')
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data_path", type=str, default="/shared/shang/datasets/nextqa/videos/")
+    parser.add_argument("--query_file", type=str, default="/shared/shang/datasets/nextqa/metadata/test_queries_full.csv")
+    parser.add_argument("--max_samples", type=int, default=2000)
+    parser.add_argument("--start_sample", type=int, default=0)
+    parser.add_argument("--multiprocessing", type=bool, default=True)
+    parser.add_argument("--print_interval", type=int, default=10)
+    parser.add_argument("--logging", type=bool, default=True)
+    parser.add_argument("--logging-file", type=str, default="./log.txt")
+    parser.add_argument("--output_file", type=str, default="./output.csv")
+    parser.add_argument("--gpu1", type=int, default=0)
+    parser.add_argument("--gpu2", type=int, default=1)
     args = parser.parse_args()
-    main()
+
+    main(args)

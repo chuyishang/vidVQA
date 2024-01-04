@@ -1,135 +1,250 @@
-from modules import BaseModel
-from vidutils import VideoInfo
+import abc
 import ast
+from modules import BaseModel
+from vidobj import VideoObj
+from config import settings as config
+import logging
+import PIL
+logging.basicConfig(filename=config["logger"], encoding='utf-8', level=logging.INFO)
 
+"""
+Answerer design:
+
+Input:
+- Video segment or frame
+- Question
+- Possible Answers
+- Global context of video
+
+Answerer Process:
+- Frame or video segment is fed into the Answerer, with global context or summary
+- Extractor extracts information about current segment
+    - Generate questions to ask using LLM
+    - Ask questions using VQA
+    - Generate captions using captioner
+- Evaluator
+    - Evaluate if the information is enough to answer the question
+    - If yes, answer the question using a Evaluator's final select module
+    - If no, pass all current context into Planner
+- Planner
+    - Read existing information
+    - Create new plan for extracting new information
+- Retriever
+    - Retrieves frames based on plan
+    - Sends info back to Extractor
+"""
+# ========================== Base answerer model ========================== #
 class Answerer():
-    def __init__(self, caption_model: BaseModel, vqa_model: BaseModel, llm: BaseModel):
+    
+    """Main Answerer class. Contains all the modules and functions to run the Answerer."""
+    def __init__(self, caption_model: BaseModel, vqa_model: BaseModel, similarity_model: BaseModel, llm: BaseModel, max_tries: int = 6):
+        self.similarity_model = similarity_model
         self.caption_model = caption_model
         self.vqa_model = vqa_model
         self.llm = llm
+        self.video = None
+        self.max_tries = max_tries
 
-    def construct_prompt(self, question: str, choices: list, video_info: VideoInfo) -> str:
-        with open('prompts/base_prompt.txt', 'r') as f:
-            prompt = f.read()
-        prompt = prompt.replace('insert_question', question)
-        prompt = prompt.replace('insert_choices', str(choices))
+        self.planner = Planner(self)
+        self.retriever = Retriever(self)
+        self.extractor = Extractor(self)
+        self.evaluator = Evaluator(self)
         
-        summary = ''
-        for frame_number in sorted(video_info.caption_memory):
-            summary += f'- Frame {frame_number}: {video_info.caption_memory[frame_number]}'
-            if frame_number in video_info.vqa_memory:
-                summary += f', {video_info.vqa_memory[frame_number]}'
-            summary += '\n'
-        prompt = prompt.replace('insert_summary', summary)
+    def construct_prompt(self, question: str, choices: list, video_info, prompt_path: str) -> str:
+        with open(prompt_path) as f:
+            prompt = f.read()
+        prompt = prompt.replace("INSERT_QUESTION_HERE", question).replace("INSERT_CHOICES_HERE", str(choices)).replace("INSERT_INFO_HERE", str(video_info))
         return prompt
     
-    def query_caption(self, frame_number: int, video_info: VideoInfo) -> str:
-        frame = video_info[frame_number]
-        caption = self.caption_model.caption(image=frame)
-        return caption
+    def siglip_prompt(self, question: str) -> str: 
+        with open(config["answerer"]["siglip_prompt"]) as f:
+            prompt = f.read()
+        prompt = prompt.replace("INSERT_QUESTION_HERE", question)
+        return prompt
 
-    def query_VQA(self, question: str, frame_number: int, video_info) -> str:
-        frame = video_info[frame_number]
-        answer = self.vqa_model.qa(image=frame, question=question)
+    def get_keyframe(self, images: list[PIL.Image.Image], question: str) -> (int, PIL.Image.Image):
+        """Uses SigLIP to get the keyframe and index of the keyframe"""
+        siglip_prompt = self.siglip_prompt(question)
+        keyframe_query = self.llm.forward(siglip_prompt)
+        index, keyframe = self.similarity_model.forward(images, queries=[keyframe_query])
+        return index.item(), keyframe[0][0]
+    
+    def construct_info(self, start_sec: float, end_sec: float, answer: str, question: str = None, type: str = "caption") -> (str, str):
+        key = f"Time {start_sec}/{end_sec}"
+        if type == "caption":
+            return key, answer
+        else: #qa case
+            qa_pair = f"Q - {question} A - {answer}"
+            return key, qa_pair
+
+
+    def init_update(self) -> None:
+        """Function that initializes the video info with the first keyframe and caption"""
+        start_frame, start_image = self.get_keyframe(self.video.images, self.video.question)
+        start_sec, end_sec = self.video.get_second_from_frame(start_frame), self.video.get_second_from_frame(len(self.video))
+        key, caption = self.extractor.forward(start_image, start_sec=start_sec)
+        self.retriever.curr = key
+        #init_key, init_info = self.construct_info(start_sec, end_sec, answer=caption)
+        self.video.info[key] = caption
+    
+    def reset_history(self) -> None:
+        self.planner.plan = None
+        self.retriever.curr = None
+
+    # TODO: Check if this is correct (do we want int or str?)
+    def forward(self, video) -> int:
+        """Forward function for Answerer. Takes in a video and returns the final answer."""
+        self.video = video
+        self.reset_history()
+        self.init_update()
+        for i in range(self.max_tries):
+            logging.info(f"TRY: {i}/{self.max_tries}")
+            # Planner
+            plan, explanation = self.planner.forward(self.video)
+            logging.info(f'PLAN: {plan}\nEXPLANATION: {explanation}')
+            # Retriever
+            new_tstmp, frame, questions, explanation = self.retriever.forward(self.video, plan)
+            logging.info(f'NEW TIME: {new_tstmp}, NEW FRAME: {frame}, NEW QUESTIONS: {questions}, EXPLANATION: {explanation}')
+            # Extractor
+            key, answer = self.extractor.forward(frame[1], questions, new_tstmp)
+            # In case we choose the same frame
+            if key in self.video.info:
+                self.video.info[key].extend(answer[1:])
+            else:
+                self.video.info[key] = answer
+            logging.info(f"INFO: {self.video.info}")
+            # Evaluator
+            final_choice = self.evaluator.forward(self.video.question, self.video.choices, self.video)
+            logging.info(f"FINAL CHOICE: {final_choice}")
+            if final_choice:
+                return final_choice
+        return self.evaluator.forward(self.video.question, self.video.choices, self.video, final_choice=True)
+
+class Extractor(Answerer):
+    def __init__(self, answerer):
+        self.answerer = answerer
+
+    def get_caption(self, image: PIL.Image.Image) -> str:
+        caption_base = "Describe the image in as much detail as possible."
+        caption = self.answerer.vqa_model.forward([image], caption_base)
+        return caption
+    
+    def get_vqa(self, image: PIL.Image.Image, question: str) -> str:
+        answer = self.answerer.vqa_model.forward([image], question)
         return answer
 
-    def select_frame():
-        pass
+    def forward(self, image: PIL.Image.Image, questions: list[str] = None, start_sec: int = 0, caption: bool = True) -> (str, str):
+        """Forward function for Extractor. Takes in a single image, and questions as a list. By default, captions the image."""
+        results = []
+        if caption:
+            new_caption = self.get_caption(image)
+            #results.append(new_caption)
+            key, text = self.answerer.construct_info(start_sec, end_sec=self.answerer.video.length_secs, answer=new_caption, type="caption")
+            results.append(text)
+        if questions:
+            for question in questions:
+                new_answer = self.get_vqa(image, question)
+                key, qa_pair = self.answerer.construct_info(start_sec, end_sec=self.answerer.video.length_secs, answer=new_answer, question=question, type="qa")
+                results.append(qa_pair)
+        # TODO: check if this is expected behavior
+        return key, results
+        #self.answerer.video.info[key] = results
 
-    def get_answer(self, question: str, subquestion: str, choices: list, video_info: VideoInfo, LIMIT: int=10):
-        """Main functionality for retrieving an answer to a question."""
-        while LIMIT > 0:
-            print(f'Iteration: {10 - LIMIT}')
-            LIMIT -= 1
-            prompt = self.construct_prompt(question, choices, video_info)
-            print(prompt)
-            response = self.llm.call_llm(prompt)
-            print(response)
-            parts = response.split('<explanation>')
-            explanation = parts[0]
-            args = ast.literal_eval(parts[1])
-            
-            label = args[0]
-            number = args[1]
-            
-            video_info.explanations.append(explanation)
-            if label == 'done':
-                # number is index of answer choice
-                return number
-            elif label == 'before':
-                frame_numbers = sorted(video_info.caption_memory.keys())
-                for i, curr_frame_number in enumerate(frame_numbers):
-                    if curr_frame_number == number:
-                        prev_frame_number = frame_numbers[i - 1]
-                        break
-                new_frame_number = int((prev_frame_number + curr_frame_number) / 2)
-            elif label == 'after':
-                frame_numbers = sorted(video_info.caption_memory.keys())
-                for i, curr_frame_number in enumerate(frame_numbers):
-                    if curr_frame_number == number:
-                        next_frame_number = frame_numbers[i + 1]
-                        break
-                new_frame_number = int((curr_frame_number + next_frame_number) / 2)
-            
-            caption = self.query_caption(new_frame_number, video_info)[0]
-            video_info.caption_memory[new_frame_number] = caption
-            
-            # TODO: remove subquestion out of here?
-            vqa_answer = self.query_VQA(subquestion, new_frame_number, video_info)[0]
-            video_info.vqa_memory[new_frame_number] = vqa_answer
-        return
-    
-
-    
+class Evaluator(Answerer):
+    def __init__(self, answerer):
+        self.answerer = answerer
+    """@staticmethod
+    def construct_prompt(question: str, choices: list, video_info, prompt_path: str) -> str:
+        with open(prompt_path) as f:
+            prompt = f.read()
+        prompt = prompt.replace("INSERT_QUESTION_HERE", question).replace("INSERT_CHOICES_HERE", str(choices)).replace("INSERT_INFO_HERE", str(video_info))
+        return prompt
+    """
         
+    def evaluate_info(self, question: str, choices: list, video: VideoObj) -> (int, str):
+        prompt_path = config["evaluator"]["evaluator_prompt"]
+        prompt =  self.answerer.construct_prompt(question, choices, video.info, prompt_path)
+        output = self.answerer.llm.forward(prompt)
+        return output
 
+    def final_select(self, question: str, choices: list, video_info: dict):
+        prompt_path = config["evaluator"]["final_select"]
+        prompt =  self.answerer.construct_prompt(question, choices, video_info, prompt_path)
+        output = self.answerer.llm.forward(prompt)
+        return output
 
-"""
-class frame_selector():
-    def __init__(self):
+    def parse_output(self, answer: tuple[int, str]) -> int:
+        try:
+            output = ast.literal_eval(answer)
+            # final_choice = output[0]
+            final_choice = output["Answer"]
+            logging.info(f"Explanation: {output['Explanation']}")
+            if final_choice not in [None, "None"]:
+                final_choice = int(final_choice)
+            return final_choice
+        except Exception as e:
+            print(e)
+    
+    def forward(self, question: str, choices: list, video: VideoObj, final_choice: bool = False):
+        if not final_choice:
+            output = self.evaluate_info(question, choices, video)
+        else:
+            output = self.final_select(question, choices, video.info)
+        final_output = self.parse_output(output)
+        return final_output
 
-    def get_answer(self, images, question, answer_choices, curr_frame, total_frames, caption, prev_info=None):
-        LIMIT = 10
-        goto_frame = curr_frame
-        VQA_question = None
-        info = {}
-        caption = caption
-        while LIMIT >= 0:
-            print("LIMIT: ", LIMIT)
-            LIMIT -= 1
-            if goto_frame == curr_frame:
-                # ask a random question.
-                question = question
-                image = self.vis_processors["eval"](images[curr_frame]).unsqueeze(0).to(modules.device2)
-                question = self.txt_processors["eval"](question)
-                answer = self.model.predict_answers(samples={"image": image, "text_input": question}, inference_method="generate")
-                print("VQA ANSWER: ", answer)
-                if answer in answer_choices:
-                    return answer
-                else:
-                    VQA_question = question
-                    goto_frame = total_frames - 1
-            else:
-                # ask a question about the frame
-                question = VQA_question
-                image = self.vis_processors["eval"](images[goto_frame]).unsqueeze(0).to(modules.device2)
-                question = self.txt_processors["eval"](question)
-                answer = self.model.predict_answers(samples={"image": image, "text_input": question}, inference_method="generate")
-                print("VQA ANSWER: ", answer)
-                if answer in answer_choices:
-                    return answer
-                else:
-                    goto_frame -= 1
-            if goto_frame == curr_frame:
-                # ask a random question.
-                image = self.vis_processors2["eval"](images[curr_frame]).unsqueeze(0).to(modules.device2)
-                caption = self.model2.generate({"image": image})
-                caption = caption[0]
-                print("CAPTION: ", caption)
-                if caption in answer_choices:
-                    return caption
-                else:
-                    goto_frame = total_frames - 1
-            else:
-                # ask a question about the frame
-"""
+class Planner():
+    def __init__(self, answerer):
+        self.answerer = answerer
+        self.plan = None
+
+    def create_plan(self, video: VideoObj):
+        prompt_path = config["planner"]["planner_prompt"]
+        prompt = self.answerer.construct_prompt(video.question, video.choices, video.info, prompt_path).replace("INSERT_PAST_PLAN_HERE", str(self.plan))
+        output = self.answerer.llm.forward(prompt)
+        output = ast.literal_eval(output)
+        self.plan = output["Plan"]
+        # modification for explanation
+        # return output[0], output[1]
+        return output["Plan"], output["Explanation"]
+        
+    def clean_output(self, output: list[str]) -> list[str]:
+        pass
+    
+    def forward(self, video: VideoObj) -> list[str]:
+        output, explanation = self.create_plan(video)
+        # explanation modification
+        if type(output) != str:
+            output = str(output)
+        return output, explanation
+
+class Retriever():
+    def __init__(self, answerer):
+        self.answerer = answerer
+        self.curr = None
+
+    # TODO: modify prompt to accept multiple question asking
+    def select_frame(self, video: VideoObj, plan: list[str]) -> dict[str, str]:
+        prompt_path = config["retriever"]["retriever_prompt"]
+        prompt = self.answerer.construct_prompt(video.question, video.choices, video.info, prompt_path).replace("INSERT_PLAN_HERE", plan).replace("INSERT_CURR_HERE", str(self.curr))
+        output = self.answerer.llm.forward(prompt)
+        return output
+    
+    def parse_answer(self, answer: dict[str, str]) -> (float, PIL.Image.Image, list[str]):
+        try:
+            output = ast.literal_eval(answer)
+            goto = output['Go-To']
+            goto = float(goto)
+            questions = output["Questions"]
+            explanation = output["Explanation"]
+            frame = self.answerer.video.get_frame_from_second(goto)
+            curr_text = f"Time {goto}/{self.answerer.video.length_secs}"
+            self.curr = curr_text
+            return goto, frame, questions, explanation
+        except Exception as e:
+            print(e)
+    
+    def forward(self, video: VideoObj, plan: list[str]) -> (float, PIL.Image.Image, list[str]):
+        output = self.select_frame(video, plan)
+        goto, frame, questions, explanation = self.parse_answer(output)
+        return goto, frame, questions, explanation

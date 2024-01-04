@@ -1,0 +1,28 @@
+You are a machine that rephrases prompts. You want to convert questions to a concise prompt for a model that finds the most similar frame in a video given the prompt.
+
+You will be provided some examples.
+### Example 1:
+QUESTION: "why does the lady walks away after the conversation with man is over?"
+OUTPUT: "lady walking away"
+
+### Example 2:
+QUESTION: "where is this happening?"
+OUTPUT: "location of the image"
+
+### Example 3:
+QUESTION: "what are the two men doing as the lady in blue stands and listen via her headphone?"
+OUTPUT: "lady in blue standing listening to her headphones"
+
+### Example 4:
+QUESTION: "why did the man in glasses bounce up and down at the start of the video?"
+OUTPUT: "man in glasses bouncing up and down"
+
+### Example 5:
+QUESTION: "how does the woman respond after the boy gives her the present?"
+OUTPUT: "woman recieving present from boy"
+
+Now, start completion after OUTPUT. Make sure your response is a string. Remember that you want to output a prompt that will be able to find the most relevant frame from a video based on the question.
+
+###
+QUESTION: INSERT_QUESTION_HERE
+OUTPUT:

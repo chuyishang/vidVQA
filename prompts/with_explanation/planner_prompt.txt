@@ -1,0 +1,60 @@
+You are a planner that plans actions.
+
+You are given a QUESTION, a list of CHOICES, and information about the video INFO. You have access to a image captioning module that you can use to caption individual frames. However, this image captioning module may be vague and have trouble finding specific details. You are also given PAST_PLAN, which is a plan from past iterations if its value is not None. You can look at what information you recieved from the previous few iterations and keep PAST_PLAN the same or update PAST_PLAN accordingly.
+
+The INFO consists of framewise captions or question-answer pairs about individual frames of the video. These have been collected on past iterations and may be noisy.
+You should decide what additional information you need to be able to choose one of the answer choices. 
+
+Return your plan as a dictionary, with "Explanation" being an explanation and "Plan" being a Python list of strings representing each action.
+
+You will be provided with some examples.
+
+### Example 1
+QUESTION: 'why does the person go near the plane towards the end?'
+CHOICES:"['give signal to pilot', 'pick it up', 'on board', 'to assist', 'taking off']"
+INFO: {'Time 1.5s/41s': 'The image features a large commercial airplane parked on the tarmac at an airport. The airplane is positioned near the center of the scene, and it appears to be preparing for takeoff. There are several people around the airplane, likely airport staff or passengers. \n\nIn the foreground, there are two trucks, one on the left side and another on the right side of the airplane. These trucks might be involved in the preparation process or providing support services to the airplane. Additionally, there is a car parked near the right side of the airplane.'}
+PAST_PLAN: None
+
+OUTPUT: {"Explanation": "We are currently at 1.5 seconds in a 41 second video, which is the close to the beginning of the video. Since the question asks about an action towards the end of the video, we need to go forward in the video to find the frame where the person goes near the plane. Then, since the question asks us why an action is being taken, we need to describe the scene in detail after we locate the action to provide us information to help us understand why.", "Plan": ["We need to move forwards in the video to identify the frames where the person goes towards the plane.", "We need to see what the action of the person closest to the plane is.]}
+
+### Example 2
+QUESTION: 'why is the boy in blue holding the black item in his hands?'
+CHOICES: "['want to play', 'he is performing a show', 'watching girl in pink', 'playing phone', 'drink water']"
+INFO: {'Time 10s/17.5s': 'The image features a young boy in yellow standing in a living room, holding a sports ball in his hand. He appears to be playing with the ball, possibly preparing to throw it. The living room has a couch in the background, and a chair is located nearby. \n\nIn addition to the sports ball, there are two other balls visible in the room, one on the floor and another on a surface. A toy car is also present in the scene, placed near the couch. The room seems to be a comfortable and playful space for the young boy to enjoy his time.'}
+PAST_PLAN: None
+
+OUTPUT: {"Explanation": "This question asks about the boy in blue. However, the description of the current frame is about a boy in yellow, with no mention of another boy in blue. We need to find the boy in blue, identify what black item he is holding in his hands, and then describe the scene so that we have more information to answer the question.", "Plan": ["We need to find the boy in blue". "We need to identify what the black item the boy in blue is holding in his hands.", "We need to describe the scene around the boy in detail."]}
+
+### Example 3
+QUESTION: 'how many people are on stage?'
+CHOICES: "['one', 'six', 'three', 'five', 'seven']"
+INFO: {'Time 13.4/65.73333333333333': ['The image features a group of children performing a dance routine on a stage in front of a crowd. There are many children in the scene, with some standing on a bench and others on the stage. They are all dressed in red and white, which adds a coordinated and colorful appearance to their performance.\n\nThe stage is equipped with a piano, which is located on the right side of the scene. The children are spread across the stage, with some standing closer to the front and others further back. The audience is watching the performance, likely enjoying the energetic and engaging performance by the children.', 'Q - How many people are on stage? A - There are five people on stage.']}
+PAST_PLAN: None
+
+OUTPUT: {"Explanation": "This question is a counting question. This question is about a video, but we can only see individual frames. This can cause issues if the first frames we see don't actually include everyone. Thus, we want to maximize probability of correctness by viewing multiple frames from the video, instead of choosing a single frame. We can do this by traveling through the video at regular intervals and finding the highest number of people on the stage.", "Plan": ["We need to travel through the video, sampling frames at regular intervals.", "We need to ask how many people are on the stage at each frame.", "We need to take the largest number of people we see on the stage as the answer."]}
+
+### Example 4:
+QUESTION: 'what does the girl in white do after bending down in the middle?'
+CHOICES: "['grab her', 'feed horse with grass', 'run towards the camera', 'umbrella', 'put her arms up']"
+INFO: {'Time 3.3333333333333335/35.7': ['The image features a group of people, including a man and a woman, standing in a field with a horse. The woman is petting the horse, while the man is holding its reins. The scene appears to be a casual gathering where the people are enjoying their time with the horse.\n\nIn addition to the main subjects, there are two dogs in the scene, one located near the left side of the image and the other near the right side. The presence of the dogs adds to the friendly and relaxed atmosphere of the gathering.'], 'Time 18.0/35.7': ['The image features a group of people, including both adults and children, gathered around a small horse in a field. The horse is positioned in the middle of the scene, and the people are standing around it, petting and interacting with the animal. There are at least six people visible in the image, with some standing closer to the horse and others further away.\n\nThe group appears to be enjoying their time together, possibly at a farm or a similar location where they can interact with the horse. The scene captures a moment of bonding and connection between the people and the horse.', 'Q - Is the girl wearing white bending down? A - Yes, the girl is bending down to pet the horse.']}
+PAST_PLAN: ['We need to find the frame where the girl in white is seen bending down in the middle.', 'We need to move to the frame after she is bending down.', 'We need to describe the scene around the girl in white in detail.']
+
+OUTPUT: {"Explanation": "From our info, we can see that we have already completed the first step of the plan, as we have asked if the girl is bending down and receied a positive answer. This means that we have found the frame where the girl in white is bending down. Thus, we can modify our plan to remove the step we have completed. Since the question asks a temporal question about an event that happens after another event, we need to move to a frame after the event we have found. Then, we need to describe the scene in more detail to collect more information. Since our past plan has these steps already, we can continue using these steps.", "Plan": ['We need to move to the frame after she is bending down.', 'We need to describe the scene around the girl in white in detail.']} 
+
+### Example 5:
+QUESTION: 'what did the lady do while turning back?'
+CHOICES: ['walk away', 'thumbs up', 'put down her club', 'applying cream on face', 'caressing for the dog']
+INFO: {'Time 17.4/47.36666666666667': ['The image features a person walking through a forest, carrying a backpack and a handbag. The person appears to be a woman, wearing a red shirt and a black backpack. She is walking on a dirt path surrounded by trees, which creates a serene and natural atmosphere. The woman seems to be enjoying her time in the woods, possibly engaging in outdoor activities or exploring the area.'], 'Time 23.7/47.36666666666667': ["The image features a person walking down a dirt path in a wooded area, carrying a backpack. The person appears to be wearing a red shirt and is the main focus of the scene. The backpack is positioned on their back, and the person seems to be enjoying their walk through the forest.\n\nThe path is surrounded by trees, creating a serene and natural atmosphere. The person's presence in the woods suggests that they might be engaging in outdoor activities such as hiking or exploring the area.", 'Q - Is the lady turning back? A - Yes, the lady is turning back on the trail, possibly because she has encountered a difficult or challenging part of the path.', 'Q - What did the lady do while turning back? A - The lady turned back on the trail while carrying her backpack, which is filled with supplies.', 'Q - Is the lady turning back? A - Yes, the lady is turning back on the trail, possibly due to fatigue or other reasons.', 'Q - What did the lady do while turning back? A - The lady turned back on her journey while carrying her backpack, which is filled with supplies.']}
+PAST_PLAN: ['Find the frame where the lady is turning back', 'Describe the action of the lady in the frame she is turning back']
+
+OUTPUT: {"Explanation": "We need to identify the action of a woman when she turning back. From our info, we have viewed multiple frames where the lady is turning back but both answers to what the lady is doing when turning back provide. Thus, we need to modify our plan to ask more specific questions about the answer choices. "Plan": ['View the frames surrounding the frame we have identified.', 'Ask if the lady is doing any of the answer choices.']}
+
+Now, return your answer after OUTPUT.
+
+###
+QUESTION: INSERT_QUESTION_HERE
+CHOICES: INSERT_CHOICES_HERE
+INFO: INSERT_INFO_HERE
+PAST_PLAN: INSERT_PAST_PLAN_HERE
+
+OUTPUT:
