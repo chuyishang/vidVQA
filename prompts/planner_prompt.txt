@@ -27,6 +27,15 @@ OUTPUT: ["We need to find the boy in blue". "We need to identify what the black 
 
 Explanation: This question requires us to reason about the boy in black. However, the description of the current frame we are on is about a boy in yellow, with no mention of another boy in blue. We need to first find the boy in blue, then find what black item he is holding in his hands, and then describe the scene so that we have more information to answer the question.
 
+# Example 3
+QUESTION: 'what did the girl do before eating the ice cream?'
+CHOICES: "['read a book', 'watch television', 'wipe her hands', 'lie down', 'sleep']"
+INFO: {'Time 14s/17.5s': 'The image features a girl eating ice cream'}
+
+OUTPUT: ["We need to find the girl eating ice cream.", "We need to find what the girl is doing before eating ice cream.", "We need to describe the scene around the girl in detail."]
+
+Explanation: This question requires us to reason about the girl eating ice cream. After finding this girl, we need to understand what the girl is doing before she eats ice cream, which requires understanding of the scene.
+
 Now, return your answer after OUTPUT.
 
 #
