@@ -17,7 +17,7 @@ gpt:                                                # GPT-3 configuration
     model: gpt-3.5-turbo-1106                        # See openai.Model.list() for available models
 
 llava:
-    model_path: /home/shang/vidVQA/models/LLaVA/llava-v1.5-7b
+    model_path: /home/amosyou/vidVQA/models/LLaVA/llava-v1.5-7b
     model_base: null
     conv_mode: null
     temperature: 0.2
@@ -26,16 +26,16 @@ llava:
     max_new_tokens: 512
 
 answerer:
-    siglip_prompt: /home/shang/vidVQA/prompts/siglip_prompt.txt
+    siglip_prompt: /home/amosyou/vidVQA/prompts/siglip_prompt.txt
 planner:
-    planner_prompt: /home/shang/vidVQA/prompts/with_explanation/planner_prompt.txt
+    planner_prompt: /home/amosyou/vidVQA/prompts/with_explanation/planner_prompt.txt
 retriever:
-    retriever_prompt: /home/shang/vidVQA/prompts/with_explanation/retriever_prompt.txt
+    retriever_prompt: /home/amosyou/vidVQA/prompts/with_explanation/retriever_prompt.txt
 extractor:
     extractor_prompt: null
 evaluator:
-    evaluator_prompt: /home/shang/vidVQA/prompts/with_explanation/evaluator_prompt.txt
-    final_select: /home/shang/vidVQA/prompts/with_explanation/final_select_prompt.txt
+    evaluator_prompt: /home/amosyou/vidVQA/prompts/with_explanation/evaluator_prompt.txt
+    final_select: /home/amosyou/vidVQA/prompts/with_explanation/final_select_prompt.txt
 
 # Saving and loading parameters
 save: True                                          # Save the results to a file
@@ -51,4 +51,4 @@ wandb: False                                        # Use Weights and Biases
 blip_half_precision: True                           # Use 8bit (Faster but slightly less accurate) for BLIP if True
 blip_v2_model_type: blip2-flan-t5-xxl               # Which model to use for BLIP-2
 
-logger: /home/shang/vidVQA/logger/debugging_run1.log
+logger: /home/amosyou/vidVQA/logger/debugging_run1.log
