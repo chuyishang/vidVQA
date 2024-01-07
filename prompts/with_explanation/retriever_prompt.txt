@@ -67,7 +67,7 @@ CHOICES: "['read a book', 'watch television', 'wipe her hands', 'lie down', 'sle
 INFO: {'Time 14s/17.5s': 'The image features a girl eating ice cream'}
 PLAN: ["We need to find the girl eating ice cream.", "We need to describe the scene around the girl in detail."]
 
-OUTPUT: {"Explanation": "This question requires us to reason about the girl eating ice cream. After finding when this girl eats ice cream, we need to understand what the girl is doing before she eating. Thus, we need to look at the frames preceding when the girl is eating. In this example, we can move backwards by half, so 14/2 = 7 seconds. Thus, we should go to the 7 second mark.", "Go-To": 7, "Questions": ["Is there a girl?", "What is the girl doing? Describe in detail"]}
+OUTPUT: {"Explanation": "This question requires us to reason about the girl eating ice cream. After finding when this girl eats ice cream, we need to understand what the girl is doing before she eating. Thus, we need to look at the frames preceding when the girl is eating. In this example, we can move backwards by half, so 14/2 = 7 seconds. Thus, we should go to the 7 second mark.", "Go-To": 7, "Questions": ["Is there a girl?", "What is the girl doing? Describe in detail."]}
 
 ### Example 7:
 QUESTION: 'what did the boy do after playing video games?'
@@ -75,7 +75,7 @@ CHOICES: "['wash his hands', 'brush his teeth', 'sleep', 'read a book', 'talk to
 INFO: {'Time 3s/27s': 'The image features a boy playing video games'}
 PLAN: ["We need to find the boy playing video games.", "We need to describe the scene around the boy in detail."]
 
-OUTPUT: {"Explanation": "From the plan, we have already found the frames for which the boy is playing video games. Now, we need to find what the boy is doing after playing video games. Thus, we need to look at the frames following when the boy is playing video games. In this example, we can move forwards by half, so (27 - 3)/2 = 12 seconds. Thus, we should go to the 12 second mark.", "Go-To": 12, "Questions": ["Is there a boy", "What is the boy doing? Describe in detail"]}
+OUTPUT: {"Explanation": "From the plan, we have already found the frames for which the boy is playing video games. Now, we need to find what the boy is doing after playing video games. Thus, we need to look at the frames following when the boy is playing video games. In this example, we can move forwards by half, so (27 - 3)/2 = 12 seconds. Thus, we should go to the 12 second mark.", "Go-To": 12, "Questions": ["Is there a boy", "What is the boy doing? Describe in detail."]}
 
 
 Now, return your answer after OUTPUT. Make sure to return your answer as a Python dictionary, and make sure that the first element representing the seconds is represented as a Python float. Make sure to double check the 'Go-To' field and the explanation, making sure that the explanation is correct. Make sure to also think about what the simplest question to ask is to fulfill the plan. Remember to break down the plan and question step by step.

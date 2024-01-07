@@ -55,7 +55,7 @@ CHOICES: "['read a book', 'watch television', 'wipe her hands', 'lie down', 'sle
 INFO: {'Time 14s/17.5s': 'The image features a girl eating ice cream'}
 PAST_PLAN: ["We need to find the girl eating ice cream.", "We need to describe the scene around the girl in detail."]
 
-OUTPUT: {"Explanation": "This question requires us to reason about the girl eating ice cream. After finding when this girl eats ice cream, we need to understand what the girl is doing before she eating. Thus, we need to modify our plan to look at the frames before the frame where she eats ice cream.", "Plan": ["View the frames after the girl eats ice cream, halfway backwards", "Describe the scene in detail surrounding the girl"]}
+OUTPUT: {"Explanation": "This question requires us to reason about the girl eating ice cream. After finding when this girl eats ice cream, we need to understand what the girl is doing before she eating. Thus, we need to modify our plan to look at the frames before the frame where she eats ice cream.", "Plan": ["View the frames before the girl eats ice cream, halfway backwards.", "Describe the scene in detail surrounding the girl."]}
 
 ### Example 7:
 QUESTION: 'what did the boy do after playing video games?'
@@ -63,7 +63,7 @@ CHOICES: "['wash his hands', 'brush his teeth', 'sleep', 'read a book', 'talk to
 INFO: {'Time 3s/27s': 'The image features a boy playing video games'}
 PAST_PLAN: ["We need to find the boy playing video games.", "We need to describe the scene around the boy in detail."]
 
-OUTPUT: {"Explanation": "From the plan, we have already found the frames for which the boy is playing video games. Now, we need to find what the boy is doing after playing video games.", "Plan": ["View the frames after the boy plays video games, half way fowards", "Describe the scnee in detail surrounding the boy"]}
+OUTPUT: {"Explanation": "From the plan, we have already found the frames for which the boy is playing video games. Now, we need to find what the boy is doing after playing video games.", "Plan": ["View the frames after the boy plays video games, half way forwards.", "Describe the scene in detail surrounding the boy."]}
 
 Now, return your answer after OUTPUT.
 
