@@ -4,7 +4,7 @@ import os
 class VideoObj():
     """Class to work with video instances. 
     This class stores information about videos and provides utility functions to navigate through the video."""
-    def __init__(self, images, question, choices, fps=30, answer=None):
+    def __init__(self, images, question, choices, fps=30, answer=None, vid_id=None, query_type=None):
         self.question = question
         self.choices = choices
         self.images = images
@@ -14,6 +14,8 @@ class VideoObj():
         self.explanations = list()
         self.length_secs = self.length / self.fps
         self.answer = answer
+        self.vid_id = vid_id
+        self.query_type = query_type
     
     def __len__(self):
         """Returns the length of the video in frames."""

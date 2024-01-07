@@ -51,4 +51,4 @@ wandb: False                                        # Use Weights and Biases
 blip_half_precision: True                           # Use 8bit (Faster but slightly less accurate) for BLIP if True
 blip_v2_model_type: blip2-flan-t5-xxl               # Which model to use for BLIP-2
 
-logger: /home/shang/vidVQA/logger/debugging_run1.log
+logger: /home/shang/vidVQA/logger/mp_log1.log
