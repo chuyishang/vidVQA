@@ -33,16 +33,6 @@ OUTPUT: {'Go-To': 5, 'Questions': ['Is there a boy in blue, and if so, is the bo
 
 Explanation: Following the plan, we need to first find the boy in blue. The boy in blue is not in the 10th second of the 17.5 second video, and we don't have information that gives us clues to where the boy in blue might be. Thus, we can go to the 5 second mark since it is roughly halfway backwards, but this is a rough heuristic - going forward to 13 seconds is also perfectly valid. Then, we want to ask if there is a boy in blue and if he has a black item in his hands to get more information. We don't need to cover all steps in a single question - if we don't get all the answers we need for this we will have recursive calls that can provide more info later.
 
-# Example 3
-QUESTION: 'what did the girl do before eating the ice cream?'
-CHOICES: "['read a book', 'watch television', 'wipe her hands', 'lie down', 'sleep']"
-INFO: {'Time 14s/17.5s': 'The image features a girl eating ice cream'}
-PLAN: ["We need to find the girl eating ice cream.", "We need to find what the girl is doing.", "We need to describe the scene around the girl in detail."]
-
-OUTPUT: {'Go-To': 7, 'Questions': ['Is there a girl with ice cream, and if so, what is the girl doing?"]}
-
-Explanation: Following the plan, we need to first find the girl eating ice cream. We found the girl eating ice cream at time 14s. Now, we need to find what the girl is doing before eating ice cream, so we can go to the 7 second mark which is roughly half way back.
-
 Now, return your answer after OUTPUT. Make sure to return your answer as a Python dictionary, and make sure that the first element representing the seconds is represented as a Python float.
 
 #
