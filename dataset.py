@@ -69,7 +69,7 @@ class MyDataset(Dataset):
         """Constructs a video from a dictionary item"""
         #print(item["query"], item['possible_answers'])
         #print(item["answer"])
-        video = VideoObj(item["video"], item["query"], item["possible_answers"], answer=item["answer"])
+        video = VideoObj(item["video"], item["query"], item["possible_answers"], answer=item["answer"], vid_id=item["video_name"], query_type=item["query_type"])
         return video
     
     def __getitem__(self, index):
