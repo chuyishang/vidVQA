@@ -88,6 +88,15 @@ CURR: 20/27
 
 OUTPUT: {"Explanation": "Based on the plan, we have already found the frame when the cat is jumping onto the table, and so that step is no longer in the plan. This question is a temporal question, and we need to look at the frames after this frame. The info shows that we have looked at a frame after the current frame, but that frame (time 38s) has no details about the cat. We can move after this frame by performing frame splitting, where we look at the frame between this frame and the next available frame after this frame, which would be (20 + 38) / 2 = 29 seconds. Thus, we should go to the 29 second mark.", "Go-To": 29, "Questions": ["Is there a cat", "What is the cat doing?"]}
 
+### Example 9:
+QUESTION: 'what did the bunny do before hopping on the rock?'
+CHOICES: "['stare at the tree', 'eat carrot', 'roll on ground', 'sunbathe', 'eat grass']"
+INFO: {'Time 42s/53s': ['The image features a bunny hopping on the rock', 'Q - Is the bunny hopping on the rock? A - Yes, the bunny is hopping on the rock.', 'Time 21s/53s': ['The image features a bunny resting in the shelter.', 'Q - What is the bunny doing? A - The bunny is sleeping in the shelter.'],]}
+PLAN: ["Move to the frames before the bunny is hopping onto the rock.", "Describe the scne around the bunny in detail."]
+CURR: 21/53
+
+OUTPUT: {"Explanation": "The plan shows that we have already found the frame where the bunny is hopping on the rock, and so this step is no longer found in the plan. Recall that our question is a temporal question. We need to find what the bunny is doing before hopping onto the rock. The info indicates that we have looked at a frame before the frame where the bunny is hopping on the rock, but that frame (time 21s) has irrelevant details about the bunny. We can move before the relevant frame by performing frame splitting, where we look at the frame between the relevant frame and the previous available frame before the relevant frame, which would be (21 + 42) / 2 = 31.5 seconds. Thus, we should go to the 31.5 second mark.", "Go-To": 31.5, "Questions": ['Is there a bunny", "What is the bunny doing"]}
+
 Now, return your answer after OUTPUT. Make sure to return your answer as a Python dictionary, and make sure that the first element representing the seconds is represented as a Python float. Make sure to double check the 'Go-To' field and the explanation, making sure that the explanation is correct. Make sure to also think about what the simplest question to ask is to fulfill the plan. Remember to break down the plan and question step by step.
 
 ###

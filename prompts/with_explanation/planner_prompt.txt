@@ -5,7 +5,7 @@ You are given a QUESTION, a list of CHOICES, and information about the video INF
 The INFO consists of framewise captions or question-answer pairs about individual frames of the video. These have been collected on past iterations and may be noisy.
 You should decide what additional information you need to be able to choose one of the answer choices. 
 
-Return your plan as a dictionary, with "Explanation" being an explanation and "Plan" being a Python list of strings representing each action.
+Return your plan as a dictionary, with "Explanation" being an explanation and "Plan" being a Python list of strings representing each action. No ```python or ```json.
 
 You will be provided with some examples.
 
@@ -74,6 +74,14 @@ PAST_PLAN: ["Find the frame when the cat is jumping onto the table.", "Move to t
 OUTPUT: {"Explanation": "Based on the plan, we have already found the frame when the cat is jumping onto the table, and so we no longer have to include this step in the plan. Notice that our question is a temporal question. We need to find what the cat is doing after jumping onto the table. We will modify the plan to traverse the frames after the frame where the cat is jumping onto the table, and remove the first step.", "Plan": ["Move to the frames after the cat is jumping onto the table.", "Describe the scene around the cat in detail."]}
 
 Now, return your answer after OUTPUT.
+
+### Example 9:
+QUESTION: 'what did the bunny do before hopping on the rock?'
+CHOICES: "['stare at the tree', 'eat carrot', 'roll on ground', 'sunbathe', 'eat grass']"
+INFO: {'Time 42s/53s': ['The image features a bunny hopping on the rock', 'Q - Is the bunny hopping on the rock? A - Yes, the bunny is hopping on the rock.', 'Time 21s/53s': ['The image features a bunny resting in the shelter.', 'Q - What is the bunny doing? A - The bunny is sleeping in the shelter.'],]}
+PAST_PLAN: ["Move to the frames before the bunny is hopping onto the rock.", "Describe the scne around the bunny in detail."]
+
+OUTPUT: {"Explanation": "The plan shows that we have already found the frame where the bunny is hopping on the rock, and so this step is no longer found in the plan. Recall that our question is a temporal question. We need to find what the bunny is doing before hopping onto the rock. We will modify the plan to traverse the frames before the frame where the bunny is hopping on the rock.", "Plan: ["Move to the frames before the bunny is hopping onto the rock.", "Describe the scene around the bunny in detail."]}
 
 ###
 QUESTION: INSERT_QUESTION_HERE
