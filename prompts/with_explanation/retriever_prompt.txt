@@ -10,7 +10,7 @@ PREV is the timestamp of the frame from the previous iteration, in the format TI
 Your goal is to understand the plan and reason about how to navigate through the video to collect the necessary information. 
 Your final output should be a dictionary, with 'Explanation' should be an explanation, expressed as a Python string, 'Go-To' being the time in seconds of where you want to go, and 'Questions' being a list of questions to ask to fulfill the plan. You can ask multiple questions.
 
-Pay special attention to how you choose the second of the new frame to go to. Reason very carefully and step by step about how you choose the second to go to, taking into account the current second you are on and the total length of the video. Do not make any mistakes or false statements when choosing the second and double check your work.
+Pay special attention to how you choose the second of the new frame to go to. Reason very carefully and step by step about how you choose the second to go to, taking into account the current second you are on and the total length of the video. Do not make any mistakes or false statements when choosing the second and double check your work. Choose a number that is strictly less than the length of the video.
 
 
 
@@ -68,7 +68,7 @@ INFO: {'Time 14s/17.5s': ['The image features a girl eating ice cream', 'Q - Is 
 PLAN: ["Move to the frames before the girl is eating ice cream.", "Describe the scene around the girl in detail."]
 CURR: 14/17.5
 
-OUTPUT: {"Explanation": "We have found the frame where the girl is eating ice cream, but there is no additional information in this frame that helps us answer the question. This question is a temporal question, and we need to look at the frames before this frame. After finding when this girl eats ice cream, we need to understand what the girl is doing before she eating. Thus, we need to look at the frames before the frame when the girl is eating. In this example, we can move backwards by performing frame splitting. Since there are no other frames in info, we can move to the frame in between the current frame and the start, which is (14 - 0) / 2 = 7 seconds. Thus, we should go to the 7 second mark.", "Go-To": 7, "Questions": ["Is there a girl?", "What is the girl doing?"]}
+OUTPUT: {"Explanation": "We have found the frame where the girl is eating ice cream, but there is no additional information in this frame that helps us answer the question. This question is a temporal question, and we need to look at the frames before this frame. After finding when this girl eats ice cream, we need to understand what the girl is doing before she eating. Thus, we need to look at the frames before the frame when the girl is eating. In this example, we can move backwards by performing frame splitting. Since there are no other frames in info, we can move to the frame in between the current frame and the start, which is (0 + 14) / 2 = 7 seconds. Thus, we should go to the 7 second mark.", "Go-To": 7, "Questions": ["Is there a girl?", "What is the girl doing?"]}
 
 ### Example 7:
 QUESTION: 'what did the boy do after playing video games?'
@@ -77,8 +77,16 @@ INFO: {'Time 3s/27s': ['The image features a boy playing video games', 'Q - Is t
 PLAN: ["Move to the frames after the boy is playing video games.", "Describe the scene around the boy in detail."]
 CURR: 3/27
 
-OUTPUT: {"Explanation": "From the plan, we have found the frame for which the boy is playing video games, but there is no additional information in this frame that helps us answer the question. This question is a temporal question, and we need to look at the frames after this frame. Now, we need to find what the boy is doing after playing video games. Thus, we need to look at the frames after the frame when the boy is playing video games. In this example, we can move forwards by performing frames splitting. Since there are no other frames in info, we can move to the frame in between the current frame and the end, which is (27 - 3) / 2 = 12 seconds. Thus, we should go to the 12 second mark.", "Go-To": 12, "Questions": ["Is there a boy", "What is the boy doing?"]}
+OUTPUT: {"Explanation": "From the plan, we have found the frame for which the boy is playing video games, but there is no additional information in this frame that helps us answer the question. This question is a temporal question, and we need to look at the frames after this frame. Now, we need to find what the boy is doing after playing video games. Thus, we need to look at the frames after the frame when the boy is playing video games. In this example, we can move forwards by performing frames splitting. Since there are no other frames in info, we can move to the frame in between the current frame and the end, which is (3 + 27) / 2 = 12 seconds. Thus, we should go to the 12 second mark.", "Go-To": 12, "Questions": ["Is there a boy", "What is the boy doing?"]}
 
+### Example 8:
+QUESTION: 'what did the cat do after jumping onto the table?'
+CHOICES: "['lie down', 'hit the wall', 'knock over jar', 'jump off', 'stare at dog']"
+INFO: {'Time 38s/44s': ['The image features a wall with paintings', 'Q - Is the cat jumping onto the table? A - No, there is no cat.'], 'Time 20s/44s': ['The image features a cat jumping onto the table', 'Q - Is the cat jumping onto the table? A - Yes, the cat is jumping onto the table.']}
+PLAN: ["Move to the frames after the cat is jumping onto the table.", "Describe the scene around the cat in detail."]
+CURR: 20/27
+
+OUTPUT: {"Explanation": "Based on the plan, we have already found the frame when the cat is jumping onto the table, and so that step is no longer in the plan. This question is a temporal question, and we need to look at the frames after this frame. The info shows that we have looked at a frame after the current frame, but that frame (time 38s) has no details about the cat. We can move after this frame by performing frame splitting, where we look at the frame between this frame and the next available frame after this frame, which would be (20 + 38) / 2 = 29 seconds. Thus, we should go to the 29 second mark.", "Go-To": 29, "Questions": ["Is there a cat", "What is the cat doing?"]}
 
 Now, return your answer after OUTPUT. Make sure to return your answer as a Python dictionary, and make sure that the first element representing the seconds is represented as a Python float. Make sure to double check the 'Go-To' field and the explanation, making sure that the explanation is correct. Make sure to also think about what the simplest question to ask is to fulfill the plan. Remember to break down the plan and question step by step.
 

@@ -8,6 +8,8 @@ The INFO consists of framewise captions or question-answer pairs about individua
 If there is enough information to answer the question, return a dictionary of the correct answer (0-indexed) under the key "Answer" and the explanation under the key "Explanation".
 If there is not enough information, return a dictionary consisting of the "Answer" as None and the explanation as "Explanation". Reason by step-by-step and double check your work.
 
+Choose an answer choice only if the details in info align closely with the answer choices.
+
 You will be provided with some examples:
 
 ### Example 1

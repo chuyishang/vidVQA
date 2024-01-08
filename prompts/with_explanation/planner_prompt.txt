@@ -65,6 +65,14 @@ PAST_PLAN: ["Find the frames when the boy playing video games.", "Move to the fr
 
 OUTPUT: {"Explanation": "From the plan, we have already found the frames for which the boy is playing video games since we have a positive answer to whether we see a boy playing video games. We can remove the initial step in the plan. Recall that our question is a temporal question. Now, we need to find what the boy is doing after playing video games. We will modify our plan to examine the frames after the frame where the boy is playing video games, and remove the first step.", "Plan": ["Move to the frames after the boy is playing video games.", "Describe the scene around the boy in detail."]}
 
+### Example 8:
+QUESTION: 'what did the cat do after jumping onto the table?'
+CHOICES: "['lie down', 'hit the wall', 'knock over jar', 'jump off', 'stare at dog']"
+INFO: {'Time 38s/44s': ['The image features a wall with paintings', 'Q - Is the cat jumping onto the table? A - No, there is no cat.'], 'Time 20s/44s': ['The image features a cat jumping onto the table', 'Q - Is the cat jumping onto the table? A - Yes, the cat is jumping onto the table.']}
+PAST_PLAN: ["Find the frame when the cat is jumping onto the table.", "Move to the frames after the cat is jumping onto the table.", "Describe the scene around the cat in detail."]
+
+OUTPUT: {"Explanation": "Based on the plan, we have already found the frame when the cat is jumping onto the table, and so we no longer have to include this step in the plan. Notice that our question is a temporal question. We need to find what the cat is doing after jumping onto the table. We will modify the plan to traverse the frames after the frame where the cat is jumping onto the table, and remove the first step.", "Plan": ["Move to the frames after the cat is jumping onto the table.", "Describe the scene around the cat in detail."]}
+
 Now, return your answer after OUTPUT.
 
 ###
