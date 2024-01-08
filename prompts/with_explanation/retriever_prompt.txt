@@ -64,18 +64,20 @@ OUTPUT: {"Explanation": "We have found the frame where the lady is turning back,
 ### Example 6:
 QUESTION: 'what did the girl do before eating the ice cream?'
 CHOICES: "['read a book', 'watch television', 'wipe her hands', 'lie down', 'sleep']"
-INFO: {'Time 14s/17.5s': 'The image features a girl eating ice cream'}
-PLAN: ["We need to find the girl eating ice cream.", "We need to describe the scene around the girl in detail."]
+INFO: {'Time 14s/17.5s': ['The image features a girl eating ice cream', 'Q - Is the girl eating ice cream? A - Yes, the girl is eating ice cream.']}
+PLAN: ["Move to the frames before the girl is eating ice cream.", "Describe the scene around the girl in detail."]
+CURR: 14/17.5
 
-OUTPUT: {"Explanation": "This question requires us to reason about the girl eating ice cream. After finding when this girl eats ice cream, we need to understand what the girl is doing before she eating. Thus, we need to look at the frames preceding when the girl is eating. In this example, we can move backwards by half, so 14/2 = 7 seconds. Thus, we should go to the 7 second mark.", "Go-To": 7, "Questions": ["Is there a girl?", "What is the girl doing? Describe in detail."]}
+OUTPUT: {"Explanation": "We have found the frame where the girl is eating ice cream, but there is no additional information in this frame that helps us answer the question. This question is a temporal question, and we need to look at the frames before this frame. After finding when this girl eats ice cream, we need to understand what the girl is doing before she eating. Thus, we need to look at the frames before the frame when the girl is eating. In this example, we can move backwards by performing frame splitting. Since there are no other frames in info, we can move to the frame in between the current frame and the start, which is (14 - 0) / 2 = 7 seconds. Thus, we should go to the 7 second mark.", "Go-To": 7, "Questions": ["Is there a girl?", "What is the girl doing?"]}
 
 ### Example 7:
 QUESTION: 'what did the boy do after playing video games?'
 CHOICES: "['wash his hands', 'brush his teeth', 'sleep', 'read a book', 'talk to his mom']"
-INFO: {'Time 3s/27s': 'The image features a boy playing video games'}
-PLAN: ["We need to find the boy playing video games.", "We need to describe the scene around the boy in detail."]
+INFO: {'Time 3s/27s': ['The image features a boy playing video games', 'Q - Is the boy playing video games? A - Yes, the boy is playing video games.']}
+PLAN: ["Move to the frames after the boy is playing video games.", "Describe the scene around the boy in detail."]
+CURR: 3/27
 
-OUTPUT: {"Explanation": "From the plan, we have already found the frames for which the boy is playing video games. Now, we need to find what the boy is doing after playing video games. Thus, we need to look at the frames following when the boy is playing video games. In this example, we can move forwards by half, so (27 - 3)/2 = 12 seconds. Thus, we should go to the 12 second mark.", "Go-To": 12, "Questions": ["Is there a boy", "What is the boy doing? Describe in detail."]}
+OUTPUT: {"Explanation": "From the plan, we have found the frame for which the boy is playing video games, but there is no additional information in this frame that helps us answer the question. This question is a temporal question, and we need to look at the frames after this frame. Now, we need to find what the boy is doing after playing video games. Thus, we need to look at the frames after the frame when the boy is playing video games. In this example, we can move forwards by performing frames splitting. Since there are no other frames in info, we can move to the frame in between the current frame and the end, which is (27 - 3) / 2 = 12 seconds. Thus, we should go to the 12 second mark.", "Go-To": 12, "Questions": ["Is there a boy", "What is the boy doing?"]}
 
 
 Now, return your answer after OUTPUT. Make sure to return your answer as a Python dictionary, and make sure that the first element representing the seconds is represented as a Python float. Make sure to double check the 'Go-To' field and the explanation, making sure that the explanation is correct. Make sure to also think about what the simplest question to ask is to fulfill the plan. Remember to break down the plan and question step by step.
